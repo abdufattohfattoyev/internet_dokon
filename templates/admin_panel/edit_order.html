@@ -1,0 +1,183 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}Buyurtma #{{ order.id }} holatini tahrirlash - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .card {
+        border-radius: 10px;
+        box-shadow: var(--card-shadow);
+        padding: 25px;
+        background-color: #fff;
+    }
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
+    .form-select, .form-control {
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.3s ease;
+    }
+    .form-select:focus, .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    .is-invalid {
+        border-color: #f72585 !important;
+    }
+    .text-danger {
+        font-size: 0.875rem;
+    }
+    .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        padding: 12px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+        padding: 12px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .order-details {
+        margin-bottom: 30px;
+    }
+    .order-details p {
+        margin: 5px 0;
+        font-size: 0.95rem;
+    }
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 5px;
+        color: #fff;
+        font-size: 0.85rem;
+    }
+    .status-kutilmoqda { background-color: #ffc107; }
+    .status-boglandi { background-color: #17a2b8; }
+    .status-bajarildi { background-color: #28a745; }
+    .status-bekor_qilindi { background-color: #dc3545; }
+    .price-text {
+        color: #000; /* Ensure prices are black */
+    }
+    @media (max-width: 576px) {
+        .card {
+            padding: 15px;
+        }
+        .btn-primary, .btn-secondary {
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+        .form-actions {
+            flex-direction: column;
+        }
+        .form-actions button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h3 class="mb-4"><i class="fas fa-edit me-2"></i>Buyurtma #{{ order.id }} holatini tahrirlash</h3>
+
+        <div class="order-details">
+            <h5>Buyurtma ma'lumotlari</h5>
+            <p><strong>Mijoz:</strong> {{ order.first_name }}</p>
+            <p><strong>Telefon:</strong> {{ order.phone }}</p>
+            <p><strong>Manzil:</strong> {{ order.region }} viloyati, {{ order.city }}{% if order.address %}, {{ order.address }}{% endif %}</p>
+            {% if order.notes %}
+                <p><strong>Mijoz izohlari:</strong> {{ order.notes }}</p>
+            {% endif %}
+            {% if order.admin_notes %}
+                <p><strong>Oldingi admin izohlari:</strong> <pre>{{ order.admin_notes }}</pre></p>
+            {% endif %}
+            <p><strong>Jami summa:</strong> <span class="price-text">{{ order.total_price|floatformat:"0"|intcomma }}</span> so'm</p>
+            <p><strong>Holat:</strong> <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span></p>
+        </div>
+
+        <form method="POST" id="edit-order-form">
+            {% csrf_token %}
+
+            <!-- Status -->
+            <div class="mb-4">
+                <label for="{{ form.status.id_for_label }}" class="form-label">Holat*</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                    <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Admin Notes (Always Visible, Optional) -->
+            <div class="mb-4">
+                <label for="{{ form.admin_notes.id_for_label }}" class="form-label">Admin izohlari</label>
+                {{ form.admin_notes }}
+                {% if form.admin_notes.errors %}
+                    <div class="text-danger small mt-1">{{ form.admin_notes.errors }}</div>
+                {% endif %}
+                <small class="text-muted">Holatni o'zgartirish uchun ixtiyoriy izoh qo'shing.</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Holatni yangilash
+                </button>
+                <a href="{% url 'admin_orders' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Ensure admin notes are optional
+    $('#id_admin_notes').prop('required', false);
+
+    // Form submission without mandatory notes
+    $('#edit-order-form').on('submit', function(e) {
+        const status = $('#id_status').val();
+        const adminNotes = $('#id_admin_notes').val().trim();
+
+        // Allow optional notes for any status
+        $('#id_admin_notes').removeClass('is-invalid');
+        $('#id_admin_notes').next('.text-danger').remove();
+    });
+
+    // Remove error on input
+    $('#id_admin_notes').on('input', function() {
+        $(this).removeClass('is-invalid');
+        $(this).next('.text-danger').remove();
+    });
+});
+</script>
+{% endblock %}

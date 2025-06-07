@@ -1,0 +1,22 @@
+/* static/css/style.css */
+body {
+    font-family: Arial, sans-serif;
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.navbar {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 576px) {
+    .card-img-top {
+        height: 150px;
+    }
+    .navbar-nav {
+        text-align: center;
+    }
+}

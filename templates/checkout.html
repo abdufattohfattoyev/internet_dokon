@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Buyurtma berish - Online Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        padding: 25px;
+        background-color: #fff;
+    }
+    .summary-card {
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        padding: 25px;
+        background-color: #fff;
+        height: 100%;
+    }
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
+    .form-select, .form-control {
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.3s ease;
+    }
+    .form-select:focus, .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67,97,238,0.25);
+    }
+    .is-invalid {
+        border-color: #f72585 !important;
+    }
+    .text-danger {
+        font-size: 0.875rem;
+    }
+    .btn-primary {
+        background-color: #4361ee;
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #3f37c9;
+    }
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    .fw-bold {
+        font-weight: 700;
+    }
+    .text-muted {
+        font-size: 0.9rem;
+    }
+    /* Ensure prices are not red unless intended */
+    .price-text {
+        color: #000; /* Default black color */
+    }
+    @media (max-width: 768px) {
+        .checkout-container {
+            padding: 15px;
+        }
+        .form-card, .summary-card {
+            padding: 20px;
+        }
+        .btn-primary {
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <h2 class="mb-4"><i class="fas fa-shopping-bag me-2"></i>Buyurtma berish</h2>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="form-card">
+                <h4 class="mb-4">Yetkazib berish ma'lumotlari</h4>
+
+                <form method="POST" id="order-form">
+                    {% csrf_token %}
+
+                    <!-- Ism -->
+                    <div class="mb-4">
+                        <label for="id_first_name" class="form-label">Ism*</label>
+                        <input type="text" class="form-control" id="id_first_name"
+                               name="first_name" required value="{{ form.first_name.value|default:'' }}">
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Telefon -->
+                    <div class="mb-4">
+                        <label for="id_phone" class="form-label">Telefon raqam*</label>
+                        <input type="tel" class="form-control" id="id_phone"
+                               name="phone" placeholder="+998901234567"
+                               value="{{ form.phone.value|default:'' }}" required>
+                        {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Namuna: +998901234567</small>
+                    </div>
+
+                    <!-- Viloyat -->
+                    <div class="mb-4">
+                        <label for="id_region" class="form-label">Viloyat*</label>
+                        <select class="form-select" id="id_region" name="region" required>
+                            <option value="samarqand" selected>Samarqand</option>
+                        </select>
+                        {% if form.region.errors %}
+                            <div class="text-danger small mt-1">{{ form.region.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Shahar/Tuman -->
+                    <div class="mb-4">
+                        <label for="id_city" class="form-label">Shahar/Tuman*</label>
+                        <select class="form-select" id="id_city" name="city" required>
+                            <option value="" selected disabled>--- Shahar/Tuman tanlang ---</option>
+                            {% if form.city.value %}
+                                <option value="{{ form.city.value }}" selected>{{ form.city.value }}</option>
+                            {% endif %}
+                        </select>
+                        <div id="city-loading" class="city-loading mt-1">
+                            <i class="fas fa-spinner fa-spin me-2"></i>Tumanlar yuklanmoqda...
+                        </div>
+                        {% if form.city.errors %}
+                            <div class="text-danger small mt-1">{{ form.city.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Qo'shimcha manzil izohi -->
+                    <div class="mb-4">
+                        <label for="id_notes" class="form-label">Qo'shimcha manzil izohi</label>
+                        <textarea class="form-control" id="id_notes" name="notes"
+                                  rows="3">{{ form.notes.value|default:'' }}</textarea>
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Masalan: uy raqami, qavat, kirish kodi yoki boshqa muhim ma'lumotlar</small>
+                    </div>
+
+                    <!-- Admin izohlari (hidden) -->
+                    <input type="hidden" name="admin_notes" id="id_admin_notes" value="">
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-3 py-3">
+                        <i class="fas fa-paper-plane me-2"></i>Buyurtmani tasdiqlash
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="summary-card">
+                <h4 class="mb-4">Buyurtma xulosasi</h4>
+
+                <div class="list-group mb-3">
+                    {% for item in cart.cartitem_set.all %}
+                    <div class="list-group-item py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ item.product.name }}</h6>
+                                <small class="text-muted">{{ item.quantity }} x <span class="price-text">{{ item.product.price|floatformat:"0"|intcomma }}</span> so'm</small>
+                            </div>
+                            <span class="price-text fw-bold">{{ item.get_total_price|floatformat:"0"|intcomma }} so'm</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between fw-bold fs-4 py-3 border-top">
+                    <span>Jami:</span>
+                    <span class="price-text">{{ cart.get_total_price|floatformat:"0"|intcomma }} so'm</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Telefon raqamni formatalash va validatsiya
+    $('#id_phone').on('input', function() {
+        this.value = this.value.replace(/[^0-9+]/g, '');
+        if (!this.value.startsWith('+998') && this.value.length > 0) {
+            this.value = '+998' + this.value.replace(/^\+/, '');
+        }
+        if (this.value.length > 13) {
+            this.value = this.value.slice(0, 13);
+        }
+    });
+
+    // Telefon raqamni blur holatida tekshirish
+    $('#id_phone').on('blur', function() {
+        const phoneRegex = /^\+998\d{9}$/;
+        const errorDiv = $(this).nextAll('.text-danger').first();
+        if (!phoneRegex.test(this.value)) {
+            $(this).addClass('is-invalid');
+            if (errorDiv.length === 0) {
+                $(this).after('<div class="text-danger small mt-1">Telefon raqami +998 bilan boshlanishi va 9 ta raqamdan iborat bo\'lishi kerak</div>');
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            errorDiv.remove();
+        }
+    });
+
+    // Samarqand tumanlarini yuklash
+    function loadSamarqandCities() {
+        const citySelect = $('#id_city');
+        const region = 'samarqand';
+
+        $('#city-loading').show();
+        citySelect.prop('disabled', true);
+        citySelect.html('<option value="" selected disabled>--- Yuklanmoqda ---</option>');
+
+        $.ajax({
+            url: '/get-cities/',
+            method: 'GET',
+            data: { 'region': region },
+            dataType: 'json',
+            success: function(response) {
+                citySelect.html('<option value="" selected disabled>--- Shahar/Tuman tanlang ---</option>');
+                if (response.cities && response.cities.length > 0) {
+                    $.each(response.cities, function(index, city) {
+                        citySelect.append($('<option>', {
+                            value: city.id,
+                            text: city.name
+                        }));
+                    });
+                    citySelect.prop('disabled', false);
+                } else {
+                    citySelect.html('<option value="" disabled>Tumanlar topilmadi</option>');
+                }
+                // Preselect city if it exists
+                {% if form.city.value %}
+                    citySelect.val('{{ form.city.value|safe }}');
+                {% endif %}
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                citySelect.html('<option value="" disabled>--- Xatolik yuz berdi ---</option>');
+                citySelect.prop('disabled', false);
+            },
+            complete: function() {
+                $('#city-loading').hide();
+            }
+        });
+    }
+
+    // Yuklashni ishga tushirish
+    loadSamarqandCities();
+});
+</script>
+{% endblock %}

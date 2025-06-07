@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - Online Shop{% endblock %}
+
+{% block content %}
+    <div class="container mt-3">
+        <div class="card">
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 300px; object-fit: cover;">
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.price }} so'm</p>
+                <p class="card-text">{{ product.description }}</p>
+                <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary cart-btn add-to-cart" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
+                        <i class="fas fa-cart-plus"></i> Savatga qo‘shish
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Similar Products -->
+        <h5 class="mt-4">O'xshash mahsulotlar</h5>
+        <div class="product-grid">
+            {% for similar in product.category.product_set.all|slice:":4" %}
+                {% if similar.id != product.id %}
+                    <div class="product-card card shadow-sm">
+                        <a href="{% url 'product_detail' similar.slug %}">
+                            <img src="{{ similar.image.url }}" alt="{{ similar.name }}" class="card-img-top" style="height: 180px; object-fit: cover;">
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title text-truncate">{{ similar.name }}</h6>
+                            <p class="card-text">{{ similar.price }} so'm</p>
+                            <form class="add-to-cart-form" data-product-id="{{ similar.id }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary cart-btn add-to-cart" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
+                                    <i class="fas fa-cart-plus"></i> Savatga qo‘shish
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p class="text-center">O'xshash mahsulotlar yo'q.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            // Add to cart functionality
+            $('.add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const productId = form.data('product-id');
+                const button = form.find('.add-to-cart');
+                const originalButtonText = button.html();
+                button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Qo‘shilmoqda...').prop('disabled', true);
+
+                $.ajax({
+                    url: `/cart/add/${productId}/`,
+                    method: 'POST',
+                    data: {
+                        'quantity': 1,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        $('#cart-count').text(response.cart_count);
+                        showToast('Savatga qo‘shildi!', 'success');
+                        button.html(originalButtonText).prop('disabled', false);
+                        if (response.cart_count > 0) {
+                            $('#checkout-footer').slideDown(200);
+                        }
+                    },
+                    error: function(xhr) {
+                        showToast('Xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.', 'danger');
+                        button.html(originalButtonText).prop('disabled', false);
+                    }
+                });
+            });
+
+            // Toast notification function
+            function showToast(message, type = 'success') {
+                const toast = $('#cartToast');
+                toast.removeClass('text-bg-success text-bg-danger').addClass(`text-bg-${type}`);
+                toast.find('.toast-body').text(message);
+                const bsToast = new bootstrap.Toast(toast, { delay: 2000 });
+                bsToast.show();
+            }
+        });
+    </script>
+{% endblock %}

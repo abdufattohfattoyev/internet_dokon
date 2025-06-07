@@ -1,0 +1,574 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load humanize %}
+{% block title %}Buyurtmalar{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Design System */
+    :root {
+        --primary: #4e73df;
+        --secondary: #858796;
+        --success: #1cc88a;
+        --info: #36b9cc;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --light: #f8f9fc;
+        --dark: #5a5c69;
+        --border-radius: 0.35rem;
+        --box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    /* Filter Section */
+    .filter-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .filter-toggle {
+        display: none;
+        background: var(--light);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .filter-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .filter-group {
+        margin-bottom: 0;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--secondary);
+        font-weight: 600;
+    }
+
+    .filter-control {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d3e2;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .filter-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .date-range-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-self: flex-end;
+    }
+
+    /* Order Cards */
+    .order-card {
+        background: white;
+        border-left: 4px solid transparent;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: all 0.2s;
+        margin-bottom: 1rem;
+    }
+
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1.5rem rgba(58, 59, 69, 0.2);
+    }
+
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .order-card-body {
+        padding: 1.25rem;
+    }
+
+    .order-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .order-client {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .order-date {
+        font-size: 0.85rem;
+        color: var(--secondary);
+    }
+
+    .order-price {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--dark);
+    }
+
+    .order-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Status Badges */
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.25rem;
+        text-transform: uppercase;
+    }
+
+    .status-kutilmoqda { border-left-color: var(--warning); }
+    .status-boglandi { border-left-color: var(--info); }
+    .status-bajarildi { border-left-color: var(--success); }
+    .status-bekor_qilindi { border-left-color: var(--danger); }
+
+    .badge-kutilmoqda { background-color: rgba(246, 194, 62, 0.2); color: var(--warning); }
+    .badge-boglandi { background-color: rgba(54, 185, 204, 0.2); color: var(--info); }
+    .badge-bajarildi { background-color: rgba(28, 200, 138, 0.2); color: var(--success); }
+    .badge-bekor_qilindi { background-color: rgba(231, 74, 59, 0.2); color: var(--danger); }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--secondary);
+        margin-bottom: 1rem;
+    }
+
+    /* Pagination */
+    .pagination {
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .page-link {
+        color: var(--primary);
+    }
+
+    /* Modal Styling */
+    .modal-product-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: var(--border-radius);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+        .filter-content {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .filter-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-content {
+            display: none;
+            grid-template-columns: 1fr;
+            padding-top: 1rem;
+        }
+
+        .filter-content.show {
+            display: grid;
+        }
+
+        .order-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .order-actions {
+            justify-content: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-4">
+    <!-- Modern Filter Card -->
+    <div class="filter-card">
+        <div class="filter-header">
+            <h1 class="h4 mb-0 text-gray-800">Buyurtmalar</h1>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="filter-control" placeholder="Buyurtma ID, mijoz ismi...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <button class="filter-toggle" type="button" id="filterToggle">
+                    <span>Filtrlar</span>
+                    <i class="fas fa-chevron-down ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-content" id="filterContent">
+            <div class="filter-group">
+                <label for="statusFilter" class="filter-label">Holati</label>
+                <select id="statusFilter" class="filter-control">
+                    <option value="all" {% if not request.GET.status %}selected{% endif %}>Barcha holatlar</option>
+                    <option value="kutilmoqda" {% if request.GET.status == 'kutilmoqda' %}selected{% endif %}>Kutilmoqda</option>
+                    <option value="boglandi" {% if request.GET.status == 'boglandi' %}selected{% endif %}>Bog'landi</option>
+                    <option value="bajarildi" {% if request.GET.status == 'bajarildi' %}selected{% endif %}>Bajarildi</option>
+                    <option value="bekor_qilindi" {% if request.GET.status == 'bekor_qilindi' %}selected{% endif %}>Bekor qilindi</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Sana oralig'i</label>
+                <div class="date-range-group">
+                    <input type="date" name="start_date" class="filter-control" value="{{ start_date|default:'' }}" placeholder="Dan">
+                    <input type="date" name="end_date" class="filter-control" value="{{ end_date|default:'' }}" placeholder="Gacha">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Summa oralig'i</label>
+                <div class="date-range-group">
+                    <input type="number" name="min_amount" class="filter-control" placeholder="Min" value="{{ request.GET.min_amount|default:'' }}">
+                    <input type="number" name="max_amount" class="filter-control" placeholder="Max" value="{{ request.GET.max_amount|default:'' }}">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Harakatlar</label>
+                <div class="filter-actions">
+                    <button type="button" class="btn btn-primary btn-sm" id="applyFilters">
+                        <i class="fas fa-filter me-1"></i> Filtrlash
+                    </button>
+                    <a href="{% url 'admin_orders' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-sync-alt me-1"></i> Tozalash
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+            <div class="col-12 mb-3">
+                <div class="order-card status-{{ order.status }}">
+                    <div class="order-card-header">
+                        <div class="order-id">#{{ order.id }}</div>
+                        <span class="badge badge-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="order-card-body">
+                        <div class="order-meta">
+                            <div>
+                                <div class="order-client">{{ order.first_name }} | {{ order.phone }}</div>
+                                <div class="order-date">{{ order.created_at|date:"d.m.Y H:i" }}</div>
+                            </div>
+                            <div class="order-price">{{ order.total_price|floatformat:"0"|intcomma }} so'm</div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if order.region %}<span class="badge bg-light text-dark">{{ order.region }}</span>{% endif %}
+                                {% if order.city %}<span class="badge bg-light text-dark ms-1">{{ order.city }}</span>{% endif %}
+                            </div>
+                            <div class="order-actions">
+                                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#orderDetails{{ order.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="{% url 'edit_order' order.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteOrder{{ order.id }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if orders.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if start_date %}&start_date={{ start_date }}&end_date={{ end_date }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in orders.paginator.page_range %}
+                    {% if orders.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if start_date %}&start_date={{ start_date }}&end_date={{ end_date }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if start_date %}&start_date={{ start_date }}&end_date={{ end_date }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <h5 class="text-gray-800 mb-3">Buyurtmalar topilmadi</h5>
+            <p class="text-gray-600 mb-4">Filtr shartlariga mos buyurtmalar mavjud emas yoki hali buyurtma qo'shilmagan.</p>
+            <a href="{% url 'admin_orders' %}" class="btn btn-primary">
+                <i class="fas fa-sync-alt me-2"></i> Filtrlarni tozalash
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Order Detail Modals -->
+{% for order in orders %}
+<div class="modal fade" id="orderDetails{{ order.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buyurtma #{{ order.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">Mijoz ma'lumotlari</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Ism:</strong> {{ order.first_name }}</p>
+                                <p class="mb-1"><strong>Telefon:</strong> {{ order.phone }}</p>
+                                {% if order.address %}<p class="mb-0"><strong>Manzil:</strong> {{ order.address }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">Buyurtma ma'lumotlari</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Holati:</strong>
+                                    <span class="badge badge-{{ order.status }}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </p>
+                                <p class="mb-1"><strong>Sana:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+                                <p class="mb-0"><strong>Jami:</strong> {{ order.total_price|floatformat:"0"|intcomma }} so'm</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light py-2">
+                        <h6 class="mb-0">Buyurtma tarkibi</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Mahsulot</th>
+                                        <th class="text-end">Narx</th>
+                                        <th class="text-end">Miqdor</th>
+                                        <th class="text-end">Summa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.orderitem_set.all %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="modal-product-img me-3">
+                                                <div>{{ item.product.name }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">{{ item.price|floatformat:"0"|intcomma }} so'm</td>
+                                        <td class="text-end">{{ item.quantity }}</td>
+                                        <td class="text-end">{{ item.get_total_price|floatformat:"0"|intcomma }} so'm</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="fw-bold">
+                                        <td colspan="3" class="text-end">Jami:</td>
+                                        <td class="text-end">{{ order.total_price|floatformat:"0"|intcomma }} so'm</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Yopish</button>
+                <a href="{% url 'edit_order' order.id %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i> Tahrirlash
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteOrder{{ order.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">O'chirishni tasdiqlang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Haqiqatan ham <strong>#{{ order.id }}</strong> raqamli buyurtmani o'chirmoqchimisiz?</p>
+                <div class="alert alert-danger py-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <small>Bu amalni qaytarib bo'lmaydi! Barcha bog'liq ma'lumotlar ham o'chib ketadi.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                <form method="POST" action="{% url 'delete_order' order.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> O'chirish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Toggle filter visibility
+    $('#filterToggle').click(function() {
+        $('#filterContent').toggleClass('show');
+        $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+    });
+
+    // Apply filters
+    $('#applyFilters').click(function() {
+        const status = $('#statusFilter').val();
+        const startDate = $('input[name="start_date"]').val();
+        const endDate = $('input[name="end_date"]').val();
+        const minAmount = $('input[name="min_amount"]').val();
+        const maxAmount = $('input[name="max_amount"]').val();
+
+        let url = "{% url 'admin_orders' %}?";
+        if (status !== 'all') url += `status=${status}&`;
+        if (startDate) url += `start_date=${startDate}&`;
+        if (endDate) url += `end_date=${endDate}&`;
+        if (minAmount) url += `min_amount=${minAmount}&`;
+        if (maxAmount) url += `max_amount=${maxAmount}&`;
+
+        // Remove trailing & if exists
+        if (url.endsWith('&')) url = url.slice(0, -1);
+
+        window.location.href = url;
+    });
+
+    // Live search functionality
+    $('#searchInput').on('input', function() {
+        const searchText = $(this).val().toLowerCase();
+        $('.order-card').each(function() {
+            const cardText = $(this).text().toLowerCase();
+            $(this).toggle(cardText.includes(searchText));
+        });
+    });
+
+    // Initialize date pickers with better UX
+    $('input[type="date"]').flatpickr({
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        locale: "uz"
+    });
+
+    // Preserve filters when paginating
+    $('.page-link').each(function() {
+        const href = $(this).attr('href');
+        if (href) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.forEach((value, key) => {
+                if (key !== 'page' && !href.includes(key)) {
+                    $(this).attr('href', href + `&${key}=${value}`);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

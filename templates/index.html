@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Online Shop{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Product Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .product-card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-card .card-body {
+            padding: 12px;
+            text-align: center;
+        }
+
+        .product-card .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-card .card-text {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .cart-btn {
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .cart-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        /* Category Tabs - Modern horizontal scroll */
+        .category-tabs-container {
+            position: sticky;
+            top: 60px;
+            z-index: 900;
+            background: #fff;
+            padding: 10px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .category-tabs {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 0 15px;
+            gap: 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .category-tabs .nav-link {
+            color: #555;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            background-color: #f5f5f5;
+            border: 1px solid #eee;
+            transition: all 0.2s ease;
+        }
+
+        .category-tabs .nav-link:hover {
+            background-color: #e9ecef;
+            color: #333;
+        }
+
+        .category-tabs .nav-link.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        /* Search Container */
+        .search-container {
+            margin: 15px;
+            background: #fff;
+            padding: 8px 15px;
+            border-radius: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+        }
+
+        .cart-icon .badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: #fff;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Sticky Checkout Footer */
+        .checkout-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border-top: 1px solid #e9ecef;
+            padding: 12px 15px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .checkout-btn {
+            font-size: 1rem;
+            padding: 10px 20px;
+            background-color: var(--success-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.2s ease;
+        }
+
+        .checkout-btn:hover {
+            background-color: #218838;
+            transform: scale(1.02);
+        }
+
+        /* Pagination */
+        .pagination .page-item .page-link {
+            color: var(--primary-color);
+            border: 1px solid #dee2e6;
+            margin: 0 3px;
+            border-radius: 8px !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (min-width: 768px) {
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .product-card img {
+                height: 180px;
+            }
+
+            .category-tabs {
+                justify-content: center;
+                padding: 0;
+                gap: 10px;
+            }
+
+            .category-tabs .nav-link {
+                padding: 8px 20px;
+                font-size: 0.95rem;
+            }
+
+            .search-container {
+                margin: 20px auto;
+                max-width: 800px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .product-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+
+            .product-card img {
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .product-card img {
+                height: 140px;
+            }
+
+            .product-card .card-title {
+                font-size: 0.95rem;
+            }
+
+            .product-card .card-text {
+                font-size: 0.9rem;
+            }
+
+            .cart-btn {
+                font-size: 0.8rem;
+                padding: 7px 10px;
+            }
+
+            .checkout-footer {
+                padding: 10px 15px;
+            }
+
+            .checkout-btn {
+                font-size: 0.95rem;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- Search Bar and Cart Icon -->
+    <div class="search-container shadow-sm">
+        <div class="cart-icon">
+            <a href="{% url 'cart_detail' %}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Savatni ko'rish">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="badge" id="cart-count">{{ cart.cartitem_set.count }}</span>
+            </a>
+        </div>
+        <form method="GET" action="{% url 'home' %}" class="w-100">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control border-0" placeholder="Mahsulot qidirish..." value="{{ request.GET.q }}" aria-label="Search">
+                <button class="btn btn-primary rounded-pill px-3" type="submit"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Category Tabs with Horizontal Scroll -->
+    <div class="category-tabs-container">
+        <ul class="nav category-tabs">
+            <li class="nav-item">
+                <a class="nav-link {% if not request.GET.category %}active{% endif %}" href="{% url 'home' %}">Барчаси</a>
+            </li>
+            {% for category in categories %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.GET.category == category.slug %}active{% endif %}" href="{% url 'category_detail' category.slug %}">{{ category.name }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="product-grid">
+        {% for product in products %}
+            <div class="product-card card">
+                <a href="{% url 'product_detail' product.slug %}">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
+                </a>
+                <div class="card-body">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <p class="card-text">{{ product.price }} so'm</p>
+                    <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn cart-btn add-to-cart">
+                            <i class="fas fa-cart-plus"></i> Savatga
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Hozircha mahsulotlar yo'q.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if products.paginator.num_pages > 1 %}
+        <nav aria-label="Page navigation" class="my-4">
+            <ul class="pagination justify-content-center">
+                {% if products.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Oldingi">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Keyingi">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+    <!-- Sticky Checkout Footer -->
+    <div class="checkout-footer" id="checkout-footer">
+        <a href="{% url 'cart_detail' %}" class="btn checkout-btn">
+            <i class="fas fa-shopping-bag me-2"></i> Buyurtma berish
+        </a>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            // Initialize tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // Add to cart functionality
+            $('.add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const productId = form.data('product-id');
+                const button = form.find('.add-to-cart');
+                const originalButtonText = button.html();
+
+                // Add loading state
+                button.html('<span class="spinner-border spinner-border-sm" role="status"></span>').prop('disabled', true);
+
+                $.ajax({
+                    url: `/cart/add/${productId}/`,
+                    method: 'POST',
+                    data: {
+                        'quantity': 1,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        // Update cart count
+                        $('#cart-count').text(response.cart_count);
+
+                        // Show success toast
+                        showToast('Mahsulot savatga qo\'shildi!', 'success');
+
+                        // Restore button state
+                        button.html('<i class="fas fa-cart-plus"></i> Savatga').prop('disabled', false);
+
+                        // Show checkout footer if cart has items
+                        if (response.cart_count > 0) {
+                            $('#checkout-footer').fadeIn(200);
+                        }
+                    },
+                    error: function(xhr) {
+                        showToast('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'danger');
+                        button.html(originalButtonText).prop('disabled', false);
+                    }
+                });
+            });
+
+            // Toast notification function
+            function showToast(message, type = 'success') {
+                const toast = $('#cartToast');
+                toast.removeClass('text-bg-success text-bg-danger').addClass(`text-bg-${type}`);
+                toast.find('.toast-body').text(message);
+                const bsToast = new bootstrap.Toast(toast, {
+                    delay: 2000,
+                    animation: true
+                });
+                bsToast.show();
+            }
+
+            // Show checkout footer if cart has items on page load
+            if (parseInt($('#cart-count').text()) > 0) {
+                $('#checkout-footer').show();
+            }
+
+            // Add slight animation to cards on hover
+            $('.product-card').hover(
+                function() {
+                    $(this).css('transform', 'translateY(-5px)');
+                },
+                function() {
+                    $(this).css('transform', 'translateY(0)');
+                }
+            );
+        });
+    </script>
+{% endblock %}

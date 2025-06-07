@@ -1,0 +1,281 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Statistika{% endblock %}
+{% block extra_css %}
+<style>
+    .status-card { min-height: 100px; font-size: 0.9rem; }
+    .table-responsive { overflow-x: auto; }
+    .filter-form select { font-size: 0.85rem; padding: 0.5rem; }
+    h2, h5, h6 { font-size: clamp(1rem, 4vw, 1.2rem); }
+    p, td, th { font-size: clamp(0.8rem, 3vw, 0.9rem); }
+    .card-body { padding: 1rem; }
+    @media (max-width: 576px) {
+        .filter-form { flex-direction: column; gap: 0.5rem; }
+        .filter-form select { width: 100%; }
+        .status-card { margin-bottom: 0.5rem; }
+        .table th, .table td { padding: 0.5rem; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4">Statistika</h2>
+    <p class="text-muted">Oxirgi yangilanish: {{ last_updated|date:"Y-m-d H:i:s e" }}</p>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="get" class="filter-form d-flex gap-3">
+                <select name="date_filter" class="form-select" onchange="this.form.submit()">
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Bugun</option>
+                    <option value="last_7_days" {% if date_filter == 'last_7_days' %}selected{% endif %}>So'nggi 7 kun</option>
+                    <option value="last_30_days" {% if date_filter == 'last_30_days' %}selected{% endif %}>So'nggi 30 kun</option>
+                </select>
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>Barcha kategoriyalar</option>
+                    {% for category in categories %}
+                        <option value="{{ category.slug }}" {% if category_filter == category.slug %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Today's Orders -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Bugungi Buyurtmalar</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Jami buyurtmalar:</strong> {{ today_order_count }}</p>
+                    <h6>Statuslar bo'yicha taqsimot:</h6>
+                    <div class="row">
+                        {% for item in today_status_distribution %}
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <div class="card status-card text-center">
+                                    <div class="card-body">
+                                        <h6>{{ item.status }}</h6>
+                                        <p class="mb-0">{{ item.count }} ta</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Top-Selling Products -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Bugun eng ko'p sotilgan mahsulotlar</h5>
+                </div>
+                <div class="card-body">
+                    {% if today_top_products %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Mahsulot</th>
+                                        <th>Sotilgan miqdor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in today_top_products %}
+                                        <tr>
+                                            <td>{{ product.product__name }}</td>
+                                            <td>{{ product.total_quantity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Bugun hech qanday mahsulot sotilmadi.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yesterday's Orders -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Kechagi Buyurtmalar</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Jami buyurtmalar:</strong> {{ yesterday_order_count }}</p>
+                    <h6>Statuslar bo'yicha taqsimot:</h6>
+                    <div class="row">
+                        {% for item in yesterday_status_distribution %}
+                            <div class="col-md-3 col-sm-6 col-12 mb-3">
+                                <div class="card status-card text-center">
+                                    <div class="card-body">
+                                        <h6>{{ item.status }}</h6>
+                                        <p class="mb-0">{{ item.count }} ta</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yesterday's Top-Selling Products -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Kechagi eng ko'p sotilgan mahsulotlar</h5>
+                </div>
+                <div class="card-body">
+                    {% if yesterday_top_products %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Mahsulot</th>
+                                        <th>Sotilgan miqdor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in yesterday_top_products %}
+                                        <tr>
+                                            <td>{{ product.product__name }}</td>
+                                            <td>{{ product.total_quantity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Kechagi kuni hech qanday mahsulot sotilmadi.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Umumiy statistika</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Jami savdo:</strong> {{ total_sales|floatformat:2 }} UZS</p>
+                    <p><strong>Jami buyurtmalar:</strong> {{ total_orders }}</p>
+                    <h6>Statuslar bo'yicha taqsimot:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Soni</th>
+                                    <th>Foiz</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in status_percentages %}
+                                    <tr>
+                                        <td>{{ item.status }}</td>
+                                        <td>{{ item.count }}</td>
+                                        <td>{{ item.percentage }}%</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Eng ko'p sotilgan mahsulotlar</h5>
+                </div>
+                <div class="card-body">
+                    {% if products_sales %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Mahsulot</th>
+                                        <th>Kategoriya</th>
+                                        <th>Sotilgan miqdor</th>
+                                        <th>Daromad (UZS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in products_sales %}
+                                        <tr>
+                                            <td>{{ product.product__name }}</td>
+                                            <td>{{ product.product__category__name }}</td>
+                                            <td>{{ product.total_quantity }}</td>
+                                            <td>{{ product.total_revenue|floatformat:2 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p>Mahsulotlar topilmadi.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily and Monthly Sales -->
+    <div class="row">
+        <div class="col-md-6 col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">So'nggi 7 kunlik savdo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Kun</th>
+                                    <th>Savdo (UZS)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in daily_sales %}
+                                    <tr>
+                                        <td>{{ sale.day }}</td>
+                                        <td>{{ sale.sales|floatformat:2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">So'nggi 30 kunlik savdo</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Jami savdo:</strong> {{ monthly_sales|floatformat:2 }} UZS</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

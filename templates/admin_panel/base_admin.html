@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - {% block title %}{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --primary-hover: #2e59d9;
+            --sidebar-width: 250px;
+            --sidebar-bg: linear-gradient(180deg, var(--primary-color), #224abe);
+            --content-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --transition-speed: 0.3s;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--content-bg);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: var(--sidebar-bg);
+            color: white;
+            transition: all var(--transition-speed) ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-menu {
+            padding: 0;
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            position: relative;
+        }
+
+        .sidebar-menu a, .sidebar-menu button {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 12px 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            border-radius: 0 25px 25px 0;
+            margin: 5px 0;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu button:hover,
+        .sidebar-menu a.active, .sidebar-menu button.active {
+            background-color: white;
+            color: var(--primary-color);
+        }
+
+        .sidebar-menu a i, .sidebar-menu button i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: all var(--transition-speed) ease;
+            min-height: 100vh;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-nav h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        /* Tables */
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            background-color: white;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom-width: 1px;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border: none;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border: none;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            border: none;
+        }
+
+        /* Badges */
+        .badge {
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-color);
+        }
+
+        .badge-success {
+            background-color: var(--success-color);
+        }
+
+        .badge-info {
+            background-color: var(--info-color);
+        }
+
+        .badge-warning {
+            background-color: var(--warning-color);
+        }
+
+        .badge-danger {
+            background-color: var(--danger-color);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            border-radius: 0.25rem;
+            text-transform: capitalize;
+        }
+
+        .status-kutilmoqda {
+            background-color: var(--warning-color);
+            color: #000;
+        }
+
+        .status-boglandi {
+            background-color: var(--info-color);
+            color: #fff;
+        }
+
+        .status-bajarildi {
+            background-color: var(--success-color);
+            color: #fff;
+        }
+
+        .status-bekor_qilindi {
+            background-color: var(--danger-color);
+            color: #fff;
+        }
+
+        /* Forms */
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e3e6f0;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Mobile Toggle Button */
+        #sidebarToggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1100;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            #sidebarToggle {
+                display: block;
+            }
+        }
+
+        /* Small devices (phones) */
+        @media (max-width: 576px) {
+            .table-responsive {
+                font-size: 14px;
+            }
+
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .top-nav {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .top-nav .btn {
+                width: 100%;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Mobile Toggle Button -->
+    <button id="sidebarToggle" class="d-lg-none">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header text-center">
+            <h4 class="text-white mb-0">Admin Panel</h4>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/admin-panel/' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_products' %}" class="{% if 'products' in request.path %}active{% endif %}">
+                    <i class="fas fa-box"></i> Mahsulotlar
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_categories' %}" class="{% if 'categories' in request.path %}active{% endif %}">
+                    <i class="fas fa-tags"></i> Kategoriyalar
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_orders' %}" class="{% if 'orders' in request.path %}active{% endif %}">
+                    <i class="fas fa-shopping-cart"></i> Buyurtmalar
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_statistics' %}" class="{% if 'statistics' in request.path %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> Statistika
+                </a>
+            </li>
+            {% if user.is_authenticated %}
+                <li>
+                    <form action="{% url 'admin_logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="{% if 'logout' in request.path %}active{% endif %}">
+                            <i class="fas fa-sign-out-alt"></i> Chiqish
+                        </button>
+                    </form>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+
+            if (window.innerWidth <= 992 &&
+                !sidebar.contains(event.target) &&
+                event.target !== toggleBtn &&
+                !toggleBtn.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Add active class to current page link
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.sidebar-menu a, .sidebar-menu button');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath || currentPath.includes('/admin-panel/logout/')) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
