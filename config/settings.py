@@ -99,7 +99,10 @@ USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Collect static files here
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # Optional: Directory for additional static files
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
