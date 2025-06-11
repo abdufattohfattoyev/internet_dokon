@@ -10,6 +10,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             padding: 15px;
+            margin-bottom: 80px;
         }
 
         .product-card {
@@ -20,6 +21,9 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .product-card:hover {
@@ -36,7 +40,9 @@
 
         .product-card .card-body {
             padding: 12px;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .product-card .card-title {
@@ -48,6 +54,7 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            min-height: 2.8em;
         }
 
         .product-card .card-text {
@@ -57,23 +64,75 @@
             margin-bottom: 10px;
         }
 
+        .product-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: auto;
+        }
+
+        .detail-btn {
+            font-size: 0.8rem;
+            padding: 6px 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .detail-btn i {
+            margin-right: 4px;
+            font-size: 0.8rem;
+        }
+
+        .detail-btn:hover {
+            background-color: #e9ecef;
+            color: #333;
+        }
+
         .cart-btn {
-            font-size: 0.85rem;
-            padding: 8px 12px;
+            font-size: 0.8rem;
+            padding: 6px 8px;
             background-color: var(--primary-color);
             border: none;
             border-radius: 8px;
-            width: 100%;
+            color: white;
             font-weight: 500;
             transition: all 0.2s ease;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-btn.added {
+            background-color: #28a745;
+            cursor: default;
+        }
+
+        .cart-btn.added:hover {
+            background-color: #28a745;
+        }
+
+        .cart-btn i {
+            margin-right: 4px;
+            font-size: 0.8rem;
         }
 
         .cart-btn:hover {
             background-color: var(--primary-hover);
-            transform: scale(1.02);
         }
 
-        /* Category Tabs - Modern horizontal scroll */
+        /* Category Tabs - Original Style */
         .category-tabs-container {
             position: sticky;
             top: 60px;
@@ -90,11 +149,11 @@
             padding: 0 15px;
             gap: 8px;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
         .category-tabs::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+            display: none;
         }
 
         .category-tabs .nav-link {
@@ -181,7 +240,6 @@
 
         .checkout-btn:hover {
             background-color: #218838;
-            transform: scale(1.02);
         }
 
         /* Pagination */
@@ -209,20 +267,13 @@
                 height: 180px;
             }
 
-            .category-tabs {
-                justify-content: center;
-                padding: 0;
-                gap: 10px;
+            .product-actions {
+                gap: 8px;
             }
 
-            .category-tabs .nav-link {
-                padding: 8px 20px;
-                font-size: 0.95rem;
-            }
-
-            .search-container {
-                margin: 20px auto;
-                max-width: 800px;
+            .detail-btn, .cart-btn {
+                font-size: 0.85rem;
+                padding: 7px 10px;
             }
         }
 
@@ -236,31 +287,15 @@
             }
         }
 
-        @media (max-width: 576px) {
-            .product-card img {
-                height: 140px;
+        @media (max-width: 400px) {
+            .detail-btn, .cart-btn {
+                font-size: 0.75rem;
+                padding: 5px 6px;
             }
 
-            .product-card .card-title {
-                font-size: 0.95rem;
-            }
-
-            .product-card .card-text {
-                font-size: 0.9rem;
-            }
-
-            .cart-btn {
-                font-size: 0.8rem;
-                padding: 7px 10px;
-            }
-
-            .checkout-footer {
-                padding: 10px 15px;
-            }
-
-            .checkout-btn {
-                font-size: 0.95rem;
-                padding: 8px 15px;
+            .detail-btn i, .cart-btn i {
+                margin-right: 3px;
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -283,11 +318,11 @@
         </form>
     </div>
 
-    <!-- Category Tabs with Horizontal Scroll -->
+    <!-- Category Tabs - Original Structure -->
     <div class="category-tabs-container">
         <ul class="nav category-tabs">
             <li class="nav-item">
-                <a class="nav-link {% if not request.GET.category %}active{% endif %}" href="{% url 'home' %}">Барчаси</a>
+                <a class="nav-link {% if not request.GET.category %}active{% endif %}" href="{% url 'home' %}">Barchasi</a>
             </li>
             {% for category in categories %}
                 <li class="nav-item">
@@ -306,19 +341,28 @@
                 </a>
                 <div class="card-body">
                     <h6 class="card-title">{{ product.name }}</h6>
-                    <p class="card-text">{{ product.price }} so'm</p>
-                    <form class="add-to-cart-form" data-product-id="{{ product.id }}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn cart-btn add-to-cart">
-                            <i class="fas fa-cart-plus"></i> Savatga
-                        </button>
-                    </form>
+                    <p class="card-text product-price" data-price="{{ product.price }}">{{ product.price }} so'm</p>
+                    <div class="product-actions">
+                        <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
+                            <i class="fas fa-eye"></i> Batafsil
+                        </a>
+                        <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn cart-btn add-to-cart {% if product in cart_products %}added{% endif %}" {% if product in cart_products %}disabled{% endif %}>
+                                <i class="fas {% if product in cart_products %}fa-check{% else %}fa-cart-plus{% endif %}"></i>
+                                {% if product in cart_products %}Qo‘shilgan{% else %}Savatga{% endif %}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% empty %}
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Hozircha mahsulotlar yo'q.</p>
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h5 class="text-muted">Mahsulotlar topilmadi</h5>
+                <a href="{% url 'home' %}" class="btn btn-outline-primary mt-3">
+                    <i class="fas fa-arrow-left me-1"></i> Bosh sahifaga qaytish
+                </a>
             </div>
         {% endfor %}
     </div>
@@ -380,7 +424,7 @@
                 const originalButtonText = button.html();
 
                 // Add loading state
-                button.html('<span class="spinner-border spinner-border-sm" role="status"></span>').prop('disabled', true);
+                button.html('<span class="spinner-border spinner-border-sm spinner-btn" role="status"></span>').prop('disabled', true);
 
                 $.ajax({
                     url: `/cart/add/${productId}/`,
@@ -393,11 +437,19 @@
                         // Update cart count
                         $('#cart-count').text(response.cart_count);
 
-                        // Show success toast
-                        showToast('Mahsulot savatga qo\'shildi!', 'success');
+                        // Show appropriate toast
+                        if (response.already_in_cart) {
+                            showToast('Bu mahsulot allaqachon savatda!', 'info');
+                        } else {
+                            showToast('Mahsulot savatga qo\'shildi!', 'success');
+                            // Update button state
+                            button.html('<i class="fas fa-check"></i> Qo‘shilgan')
+                                  .addClass('added')
+                                  .prop('disabled', true);
+                        }
 
-                        // Restore button state
-                        button.html('<i class="fas fa-cart-plus"></i> Savatga').prop('disabled', false);
+                        // Restore button state (only for loading spinner)
+                        button.prop('disabled', response.already_in_cart ? false : true);
 
                         // Show checkout footer if cart has items
                         if (response.cart_count > 0) {
@@ -414,7 +466,7 @@
             // Toast notification function
             function showToast(message, type = 'success') {
                 const toast = $('#cartToast');
-                toast.removeClass('text-bg-success text-bg-danger').addClass(`text-bg-${type}`);
+                toast.removeClass('text-bg-success text-bg-danger text-bg-info').addClass(`text-bg-${type}`);
                 toast.find('.toast-body').text(message);
                 const bsToast = new bootstrap.Toast(toast, {
                     delay: 2000,
@@ -427,16 +479,6 @@
             if (parseInt($('#cart-count').text()) > 0) {
                 $('#checkout-footer').show();
             }
-
-            // Add slight animation to cards on hover
-            $('.product-card').hover(
-                function() {
-                    $(this).css('transform', 'translateY(-5px)');
-                },
-                function() {
-                    $(this).css('transform', 'translateY(0)');
-                }
-            );
         });
     </script>
 {% endblock %}

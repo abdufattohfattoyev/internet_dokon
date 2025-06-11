@@ -3,46 +3,30 @@
 {% block title %}{{ product.name }} - Online Shop{% endblock %}
 
 {% block content %}
-    <div class="container mt-3">
-        <div class="card">
-            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 300px; object-fit: cover;">
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text">{{ product.price }} so'm</p>
-                <p class="card-text">{{ product.description }}</p>
-                <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+    <div class="container mt-4">
+        <div class="card product-detail-card shadow-sm border-0">
+            <!-- Product Image -->
+            <div class="product-image-container">
+                <img src="{{ product.image.url }}" class="card-img-top img-fluid" alt="{{ product.name }}" style="max-height: 400px; object-fit: cover; width: 100%;">
+            </div>
+
+            <!-- Product Details -->
+            <div class="card-body p-4">
+                <h2 class="card-title text-primary mb-3">{{ product.name }}</h2>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-success fw-bold">{{ product.price }} so'm</h4>
+                </div>
+                <div class="product-description">
+                    <h6 class="text-muted mb-2">Tavsif:</h6>
+                    <p class="text-secondary">{{ product.description|linebreaks }}</p>
+                </div>
+                <form class="add-to-cart-form mt-4" data-product-id="{{ product.id }}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-primary cart-btn add-to-cart" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
-                        <i class="fas fa-cart-plus"></i> Savatga qo‘shish
+                    <button type="submit" class="btn btn-primary cart-btn add-to-cart w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
+                        <i class="fas fa-cart-plus me-2"></i> Savatga qo‘shish
                     </button>
                 </form>
             </div>
-        </div>
-
-        <!-- Similar Products -->
-        <h5 class="mt-4">O'xshash mahsulotlar</h5>
-        <div class="product-grid">
-            {% for similar in product.category.product_set.all|slice:":4" %}
-                {% if similar.id != product.id %}
-                    <div class="product-card card shadow-sm">
-                        <a href="{% url 'product_detail' similar.slug %}">
-                            <img src="{{ similar.image.url }}" alt="{{ similar.name }}" class="card-img-top" style="height: 180px; object-fit: cover;">
-                        </a>
-                        <div class="card-body">
-                            <h6 class="card-title text-truncate">{{ similar.name }}</h6>
-                            <p class="card-text">{{ similar.price }} so'm</p>
-                            <form class="add-to-cart-form" data-product-id="{{ similar.id }}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary cart-btn add-to-cart" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
-                                    <i class="fas fa-cart-plus"></i> Savatga qo‘shish
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                {% endif %}
-            {% empty %}
-                <p class="text-center">O'xshash mahsulotlar yo'q.</p>
-            {% endfor %}
         </div>
     </div>
 {% endblock %}
@@ -91,4 +75,80 @@
             }
         });
     </script>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .product-detail-card {
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .product-image-container {
+            background: #f8f9fa;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        .product-description p {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .add-to-cart-form .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-form .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .product-image-container img {
+                max-height: 250px;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .product-description p {
+                font-size: 0.95rem;
+            }
+
+            .add-to-cart-form .btn {
+                padding: 0.6rem 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .product-image-container img {
+                max-height: 200px;
+            }
+
+            .card-title {
+                font-size: 1.25rem;
+            }
+
+            .product-description p {
+                font-size: 0.9rem;
+            }
+
+            .add-to-cart-form .btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
 {% endblock %}

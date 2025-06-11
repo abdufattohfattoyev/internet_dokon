@@ -1,281 +1,578 @@
 {% extends 'admin_panel/base_admin.html' %}
+{% load humanize %}
+{% load static %}
+
 {% block title %}Statistika{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.min.js"></script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
-    .status-card { min-height: 100px; font-size: 0.9rem; }
-    .table-responsive { overflow-x: auto; }
-    .filter-form select { font-size: 0.85rem; padding: 0.5rem; }
-    h2, h5, h6 { font-size: clamp(1rem, 4vw, 1.2rem); }
-    p, td, th { font-size: clamp(0.8rem, 3vw, 0.9rem); }
-    .card-body { padding: 1rem; }
-    @media (max-width: 576px) {
-        .filter-form { flex-direction: column; gap: 0.5rem; }
-        .filter-form select { width: 100%; }
-        .status-card { margin-bottom: 0.5rem; }
-        .table th, .table td { padding: 0.5rem; }
+    :root {
+        --primary: #2563eb;
+        --success: #16a34a;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --purple: #7c3aed;
+        --teal: #0d9488;
+        --bg-light: #f8fafc;
+        --text-muted: #64748b;
+    }
+
+    .container-fluid {
+        padding: 1rem;
+        max-width: 1600px;
+    }
+
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        border: none;
+        background: white;
+    }
+
+    .card-header {
+        background: var(--bg-light);
+        border-radius: 12px 12px 0 0;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .status-card {
+        border-radius: 8px;
+        border-left: 4px solid;
+        background: white;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+
+    .status-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        background: var(--bg-light);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .filter-form select,
+    .filter-form input,
+    .filter-form button {
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .filter-form button {
+        background: var(--primary);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .filter-form button:hover {
+        background: #1d4ed8;
+    }
+
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+        width: 100%;
+        min-width: 600px;
+    }
+
+    .table th, .table td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .price-value {
+        font-weight: 500;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        max-width: 100%;
+        margin: 1rem 0;
+    }
+
+    .status-new { border-left-color: var(--primary); }
+    .status-processing { border-left-color: var(--warning); }
+    .status-completed { border-left-color: var(--success); }
+    .status-cancelled { border-left-color: var(--danger); }
+    .status-pending { border-left-color: var(--purple); }
+    .status-shipped { border-left-color: var(--teal); }
+
+    /* Mobile-specific styles */
+    .mobile-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .mobile-stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mobile-stat-card .label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .mobile-stat-card .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .mobile-status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .mobile-status-card {
+        border-radius: 8px;
+        border-left: 4px solid;
+        padding: 0.5rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mobile-status-card .status {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+
+    .mobile-status-card .count {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    /* Improved responsive tables */
+    .responsive-table {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .responsive-table table {
+        min-width: 100%;
+        width: auto;
+    }
+
+    .responsive-table th,
+    .responsive-table td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+
+    .responsive-table thead th {
+        position: sticky;
+        top: 0;
+        background: var(--bg-light);
+        z-index: 10;
+    }
+
+    .responsive-table .price-value {
+        font-weight: 500;
+        color: var(--primary);
+    }
+
+    /* Hide/show based on screen size */
+    .desktop-only {
+        display: none;
+    }
+
+    .mobile-only {
+        display: block;
+    }
+
+    @media (min-width: 768px) {
+        .mobile-only {
+            display: none;
+        }
+
+        .desktop-only {
+            display: block;
+        }
+
+        .mobile-stats-grid,
+        .mobile-status-grid {
+            display: none;
+        }
+
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .filter-form {
+            flex-direction: column;
+        }
+
+        .filter-form select,
+        .filter-form input,
+        .filter-form button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-header {
+            padding: 0.75rem;
+        }
+
+        .card-body {
+            padding: 0.75rem;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .mobile-stat-card {
+            padding: 0.5rem;
+        }
+
+        .mobile-stat-card .value {
+            font-size: 1rem;
+        }
+
+        /* Improved mobile table styling */
+        .responsive-table th,
+        .responsive-table td {
+            padding: 0.5rem 0.3rem;
+            font-size: 0.8rem;
+        }
+
+        .responsive-table .price-value {
+            font-weight: 600;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .mobile-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .mobile-stat-card .value {
+            font-size: 0.9rem;
+        }
+
+        .mobile-status-card .count {
+            font-size: 0.8rem;
+        }
+
+        /* Further optimize tables for very small screens */
+        .responsive-table th,
+        .responsive-table td {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.75rem;
+        }
     }
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <h2 class="mb-4">Statistika</h2>
-    <p class="text-muted">Oxirgi yangilanish: {{ last_updated|date:"Y-m-d H:i:s e" }}</p>
+    <h2 class="mb-3">Statistika</h2>
+    <p class="text-muted small">Oxirgi yangilanish: {{ last_updated|date:"Y-m-d H:i:s e" }}</p>
 
     <!-- Filters -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <form method="get" class="filter-form d-flex gap-3">
-                <select name="date_filter" class="form-select" onchange="this.form.submit()">
-                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Bugun</option>
-                    <option value="last_7_days" {% if date_filter == 'last_7_days' %}selected{% endif %}>So'nggi 7 kun</option>
-                    <option value="last_30_days" {% if date_filter == 'last_30_days' %}selected{% endif %}>So'nggi 30 kun</option>
-                </select>
-                <select name="category" class="form-select" onchange="this.form.submit()">
-                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>Barcha kategoriyalar</option>
-                    {% for category in categories %}
-                        <option value="{{ category.slug }}" {% if category_filter == category.slug %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
+    <form method="get" class="filter-form">
+        <select name="date_filter" onchange="this.form.submit()">
+            <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Bugun</option>
+            <option value="last_7_days" {% if date_filter == 'last_7_days' %}selected{% endif %}>7 kun</option>
+            <option value="last_30_days" {% if date_filter == 'last_30_days' %}selected{% endif %}>30 kun</option>
+            <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Maxsus sana</option>
+        </select>
+        {% if date_filter == 'custom' %}
+            <input type="date" name="start_date" value="{{ start_date|default_if_none:'' }}" required>
+            <input type="date" name="end_date" value="{{ end_date|default_if_none:'' }}" required>
+        {% endif %}
+        <select name="category" onchange="this.form.submit()">
+            <option value="all" {% if category_filter == 'all' %}selected{% endif %}>Barcha kategoriyalar</option>
+            {% for category in categories %}
+                <option value="{{ category.slug }}" {% if category_filter == category.slug %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrlash</button>
+        <a href="{% url 'admin_statistics_export' %}?date_filter={{ date_filter }}&category={{ category_filter }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-primary">CSV Yuklab olish</a>
+    </form>
+
+    <!-- Today's Summary - Mobile Version -->
+    <div class="card mobile-only">
+        <div class="card-header">
+            <h5 class="mb-0">Bugungi Statistika</h5>
+        </div>
+        <div class="card-body">
+            <div class="mobile-stats-grid">
+                <div class="mobile-stat-card">
+                    <div class="label">Jami buyurtmalar</div>
+                    <div class="value">{{ today_order_count }} ta</div>
+                </div>
+                <div class="mobile-stat-card">
+                    <div class="label">Sotilgan buyurtmalar</div>
+                    <div class="value">{{ today_completed_count }} ta</div>
+                </div>
+                <div class="mobile-stat-card">
+                    <div class="label">Daromad</div>
+                    <div class="value">{{ today_revenue|floatformat:0|intcomma }} so'm</div>
+                </div>
+            </div>
+            <h6 class="mt-3 mb-2">Status bo'yicha</h6>
+            <div class="mobile-status-grid">
+                {% for item in today_status_distribution %}
+                    <div class="mobile-status-card status-{{ item.status|lower }}">
+                        <div class="status">{{ item.status }}</div>
+                        <div class="count">{{ item.count }} ta</div>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
-    <!-- Today's Orders -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Bugungi Buyurtmalar</h5>
+    <!-- Today's Summary - Desktop Version -->
+    <div class="card desktop-only">
+        <div class="card-header">
+            <h5 class="mb-0">Bugungi Statistika</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Jami buyurtmalar</p>
+                    <h4>{{ today_order_count }} ta</h4>
                 </div>
-                <div class="card-body">
-                    <p><strong>Jami buyurtmalar:</strong> {{ today_order_count }}</p>
-                    <h6>Statuslar bo'yicha taqsimot:</h6>
-                    <div class="row">
-                        {% for item in today_status_distribution %}
-                            <div class="col-md-3 col-sm-6 col-12 mb-3">
-                                <div class="card status-card text-center">
-                                    <div class="card-body">
-                                        <h6>{{ item.status }}</h6>
-                                        <p class="mb-0">{{ item.count }} ta</p>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Sotilgan buyurtmalar</p>
+                    <h4>{{ today_completed_count }} ta</h4>
+                </div>
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Daromad</p>
+                    <h4 class="price-value">{{ today_revenue|floatformat:0|intcomma }} so'm</h4>
+                </div>
+            </div>
+            <div class="row status-row">
+                {% for item in today_status_distribution %}
+                    <div class="col-md-3 col-6">
+                        <div class="status-card status-{{ item.status|lower }}">
+                            <h6 class="mb-1 small">{{ item.status }}</h6>
+                            <p class="mb-0 fw-bold">{{ item.count }} ta</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Summary - Mobile Version -->
+    <div class="card mobile-only">
+        <div class="card-header">
+            <h5 class="mb-0">Tanlangan Davr</h5>
+        </div>
+        <div class="card-body">
+            <div class="mobile-stats-grid">
+                <div class="mobile-stat-card">
+                    <div class="label">Jami buyurtmalar</div>
+                    <div class="value">{{ period_total_orders }} ta</div>
+                </div>
+                <div class="mobile-stat-card">
+                    <div class="label">Sotilgan buyurtmalar</div>
+                    <div class="value">{{ period_completed_orders }} ta</div>
+                </div>
+                <div class="mobile-stat-card">
+                    <div class="label">Umumiy daromad</div>
+                    <div class="value">{{ period_total_sales|floatformat:0|intcomma }} so'm</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Summary - Desktop Version -->
+    <div class="card desktop-only">
+        <div class="card-header">
+            <h5 class="mb-0">Tanlangan Davr Statistikasi</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Jami buyurtmalar</p>
+                    <h4>{{ period_total_orders }} ta</h4>
+                </div>
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Sotilgan buyurtmalar</p>
+                    <h4>{{ period_completed_orders }} ta</h4>
+                </div>
+                <div class="col-md-4 col-12">
+                    <p class="text-muted small mb-1">Umumiy daromad</p>
+                    <h4 class="price-value">{{ period_total_sales|floatformat:0|intcomma }} so'm</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales by Date -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Sana bo'yicha savdo</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="responsive-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sana</th>
+                            <th>Jami buyurtmalar</th>
+                            <th>Sotilgan buyurtmalar</th>
+                            <th>Daromad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in period_sales %}
+                            <tr>
+                                <td>{{ sale.date|date:"d M Y" }}</td>
+                                <td>{{ sale.count }} ta</td>
+                                <td>{{ sale.completed_count }} ta</td>
+                                <td class="price-value">{{ sale.total|floatformat:0|intcomma }} so'm</td>
+                            </tr>
                         {% endfor %}
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Today's Top-Selling Products -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Bugun eng ko'p sotilgan mahsulotlar</h5>
-                </div>
-                <div class="card-body">
-                    {% if today_top_products %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Mahsulot</th>
-                                        <th>Sotilgan miqdor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for product in today_top_products %}
-                                        <tr>
-                                            <td>{{ product.product__name }}</td>
-                                            <td>{{ product.total_quantity }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p>Bugun hech qanday mahsulot sotilmadi.</p>
-                    {% endif %}
-                </div>
-            </div>
+    <!-- All Sold Products -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Sotilgan Mahsulotlar</h5>
         </div>
-    </div>
-
-    <!-- Yesterday's Orders -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Kechagi Buyurtmalar</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Jami buyurtmalar:</strong> {{ yesterday_order_count }}</p>
-                    <h6>Statuslar bo'yicha taqsimot:</h6>
-                    <div class="row">
-                        {% for item in yesterday_status_distribution %}
-                            <div class="col-md-3 col-sm-6 col-12 mb-3">
-                                <div class="card status-card text-center">
-                                    <div class="card-body">
-                                        <h6>{{ item.status }}</h6>
-                                        <p class="mb-0">{{ item.count }} ta</p>
-                                    </div>
-                                </div>
-                            </div>
+        <div class="card-body p-0">
+            <div class="responsive-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Mahsulot</th>
+                            <th>Kategoriya</th>
+                            <th>Sotilgan soni</th>
+                            <th>Daromad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products_sales %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ product.product__name }}</td>
+                                <td>{{ product.product__category__name }}</td>
+                                <td>{{ product.total_quantity }} ta</td>
+                                <td class="price-value">{{ product.total_revenue|floatformat:0|intcomma }} so'm</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">Tanlangan davrda sotilgan mahsulotlar yo'q</td>
+                            </tr>
                         {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Yesterday's Top-Selling Products -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Kechagi eng ko'p sotilgan mahsulotlar</h5>
-                </div>
-                <div class="card-body">
-                    {% if yesterday_top_products %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Mahsulot</th>
-                                        <th>Sotilgan miqdor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for product in yesterday_top_products %}
-                                        <tr>
-                                            <td>{{ product.product__name }}</td>
-                                            <td>{{ product.total_quantity }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p>Kechagi kuni hech qanday mahsulot sotilmadi.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Overall Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-6 col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Umumiy statistika</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Jami savdo:</strong> {{ total_sales|floatformat:2 }} UZS</p>
-                    <p><strong>Jami buyurtmalar:</strong> {{ total_orders }}</p>
-                    <h6>Statuslar bo'yicha taqsimot:</h6>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Status</th>
-                                    <th>Soni</th>
-                                    <th>Foiz</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in status_percentages %}
-                                    <tr>
-                                        <td>{{ item.status }}</td>
-                                        <td>{{ item.count }}</td>
-                                        <td>{{ item.percentage }}%</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Eng ko'p sotilgan mahsulotlar</h5>
-                </div>
-                <div class="card-body">
-                    {% if products_sales %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Mahsulot</th>
-                                        <th>Kategoriya</th>
-                                        <th>Sotilgan miqdor</th>
-                                        <th>Daromad (UZS)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for product in products_sales %}
-                                        <tr>
-                                            <td>{{ product.product__name }}</td>
-                                            <td>{{ product.product__category__name }}</td>
-                                            <td>{{ product.total_quantity }}</td>
-                                            <td>{{ product.total_revenue|floatformat:2 }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <p>Mahsulotlar topilmadi.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Daily and Monthly Sales -->
-    <div class="row">
-        <div class="col-md-6 col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">So'nggi 7 kunlik savdo</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Kun</th>
-                                    <th>Savdo (UZS)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sale in daily_sales %}
-                                    <tr>
-                                        <td>{{ sale.day }}</td>
-                                        <td>{{ sale.sales|floatformat:2 }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">So'nggi 30 kunlik savdo</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Jami savdo:</strong> {{ monthly_sales|floatformat:2 }} UZS</p>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesData = {
+        labels: [{% for sale in period_sales %}'{{ sale.date|date:"d M" }}',{% endfor %}],
+        datasets: [
+            {
+                label: 'Daromad (so\'m)',
+                data: [{% for sale in period_sales %}{{ sale.total }},{% endfor %}],
+                backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                borderColor: 'rgba(37, 99, 235, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: 'Sotilgan buyurtmalar',
+                data: [{% for sale in period_sales %}{{ sale.completed_count }},{% endfor %}],
+                backgroundColor: 'rgba(22, 163, 74, 0.2)',
+                borderColor: 'rgba(22, 163, 74, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }
+        ]
+    };
+
+    new Chart(ctx, {
+        type: 'line',
+        data: salesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 12 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label.includes('Daromad')) {
+                                return `${label}: ${context.parsed.y.toLocaleString()} so'm`;
+                            }
+                            return `${label}: ${context.parsed.y} ta`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Qiymat' }
+                },
+                x: {
+                    title: { display: true, text: 'Sana' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

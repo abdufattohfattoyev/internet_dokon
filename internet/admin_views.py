@@ -1,21 +1,23 @@
+import csv
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.paginator import Paginator
-from django.db.models import Count, Sum, F
+from django.db.models import Count, Sum, F, Q
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 from .forms import OrderForm, SimpleOrderForm
 from .models import Product, Category, Order, OrderItem, Cart, CartItem
-from datetime import datetime
 import pytz
+
 
 # Admin Login View
 class AdminLoginView(LoginView):
@@ -25,9 +27,11 @@ class AdminLoginView(LoginView):
     def get_success_url(self):
         return '/admin-panel/'
 
+
 # Admin Logout View
 class AdminLogoutView(LogoutView):
     next_page = '/admin-panel/login/'
+
 
 # Admin Dashboard
 @login_required
@@ -41,32 +45,32 @@ def admin_dashboard(request):
         'categories_count': categories_count,
     })
 
+
 # Admin Statistics
+
+
 @login_required
 def admin_statistics(request):
-    # Asia/Tashkent timezone
     uzb_tz = pytz.timezone('Asia/Tashkent')
-    now = timezone.now().astimezone(uzb_tz)  # Convert to Tashkent time
-    print(f"Current Tashkent time: {now}")
+    now = timezone.now().astimezone(uzb_tz)
 
-    # Time ranges
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
-    yesterday_start = today_start - timedelta(days=1)
-    yesterday_end = today_start
-
-    print(f"Today range: {today_start} - {today_end}")
-    print(f"Yesterday range: {yesterday_start} - {yesterday_end}")
 
     date_filter = request.GET.get('date_filter', 'today')
     category_filter = request.GET.get('category', 'all')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
     # Today's orders
     today_orders = Order.objects.filter(created_at__range=[today_start, today_end])
     today_order_count = today_orders.count()
+    today_completed_count = today_orders.filter(status='bajarildi').count()
+    today_revenue = today_orders.filter(status='bajarildi').aggregate(
+        total=Coalesce(Sum('total_price'), Decimal('0'))
+    )['total']
 
-    # Today's status distribution
-    today_status_distribution = today_orders.values('status').annotate(count=Count('id')).order_by('status')
+    today_status_distribution = today_orders.values('status').annotate(count=Count('id'))
     status_counts = {status: 0 for status, _ in Order.STATUS_CHOICES}
     for item in today_status_distribution:
         status_counts[item['status']] = item['count']
@@ -75,67 +79,40 @@ def admin_statistics(request):
         for status, count in status_counts.items()
     ]
 
-    # Today's top products
-    today_top_products = OrderItem.objects.filter(
-        order__created_at__range=[today_start, today_end]
-    ).values(
-        'product__name'
-    ).annotate(
-        total_quantity=Sum('quantity')
-    ).order_by('-total_quantity')[:5]
-
-    # Yesterday's orders
-    yesterday_orders = Order.objects.filter(created_at__range=[yesterday_start, yesterday_end])
-    yesterday_order_count = yesterday_orders.count()
-
-    # Yesterday status distribution
-    yesterday_status_distribution = yesterday_orders.values('status').annotate(count=Count('id')).order_by('status')
-    yesterday_status_counts = {status: 0 for status, _ in Order.STATUS_CHOICES}
-    for item in yesterday_status_distribution:
-        yesterday_status_counts[item['status']] = item['count']
-    yesterday_status_distribution_list = [
-        {'status': dict(Order.STATUS_CHOICES).get(status, status), 'count': count}
-        for status, count in yesterday_status_counts.items()
-    ]
-
-    # Yesterday top-selling products
-    yesterday_top_products = OrderItem.objects.filter(
-        order__created_at__range=[yesterday_start, yesterday_end]
-    ).values(
-        'product__name'
-    ).annotate(
-        total_quantity=Sum('quantity')
-    ).order_by('-total_quantity')[:5]
-
-    # Overall statistics
-    orders_query = Order.objects.all()
-    total_sales = orders_query.aggregate(total=Coalesce(Sum('total_price'), Decimal('0')))['total']
-    total_orders = orders_query.count()
-
-    # Date filter for general stats
-    last_7_days = now - timedelta(days=7)
-    last_30_days = now - timedelta(days=30)
-
+    # Period orders
+    period_orders = Order.objects.all()
     if date_filter == 'today':
-        orders_query = orders_query.filter(created_at__range=[today_start, today_end])
+        period_orders = period_orders.filter(created_at__range=[today_start, today_end])
     elif date_filter == 'last_7_days':
-        orders_query = orders_query.filter(created_at__gte=last_7_days)
+        period_orders = period_orders.filter(created_at__gte=now - timedelta(days=7))
     elif date_filter == 'last_30_days':
-        orders_query = orders_query.filter(created_at__gte=last_30_days)
+        period_orders = period_orders.filter(created_at__gte=now - timedelta(days=30))
+    elif date_filter == 'custom' and start_date and end_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=uzb_tz)
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(tzinfo=uzb_tz, hour=23, minute=59, second=59)
+            period_orders = period_orders.filter(created_at__range=[start_date, end_date])
+        except ValueError:
+            pass
 
-    # Status percentages
-    period_orders = orders_query.count()
-    status_distribution = orders_query.values('status').annotate(count=Count('id')).order_by('status')
-    status_percentages = []
-    for item in status_distribution:
-        percentage = (item['count'] / period_orders * 100) if period_orders > 0 else 0
-        status_percentages.append({
+    period_total_orders = period_orders.count()
+    period_completed_orders = period_orders.filter(status='bajarildi').count()
+    period_total_sales = period_orders.filter(status='bajarildi').aggregate(
+        total=Coalesce(Sum('total_price'), Decimal('0'))
+    )['total']
+
+    # Status distribution for the period
+    status_distribution = period_orders.values('status').annotate(count=Count('id'))
+    status_percentages = [
+        {
             'status': dict(Order.STATUS_CHOICES).get(item['status'], item['status']),
             'count': item['count'],
-            'percentage': round(percentage, 2)
-        })
+            'percentage': round((item['count'] / period_total_orders * 100) if period_total_orders > 0 else 0, 2)
+        }
+        for item in status_distribution
+    ]
 
-    # Product sales
+    # Products sold in the period
     products_sales = OrderItem.objects.filter(
         order__status='bajarildi'
     ).values(
@@ -149,53 +126,127 @@ def admin_statistics(request):
     if date_filter == 'today':
         products_sales = products_sales.filter(order__created_at__range=[today_start, today_end])
     elif date_filter == 'last_7_days':
-        products_sales = products_sales.filter(order__created_at__gte=last_7_days)
+        products_sales = products_sales.filter(order__created_at__gte=now - timedelta(days=7))
     elif date_filter == 'last_30_days':
-        products_sales = products_sales.filter(order__created_at__gte=last_30_days)
+        products_sales = products_sales.filter(order__created_at__gte=now - timedelta(days=30))
+    elif date_filter == 'custom' and start_date and end_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=uzb_tz)
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(tzinfo=uzb_tz, hour=23, minute=59, second=59)
+            products_sales = products_sales.filter(order__created_at__range=[start_date, end_date])
+        except ValueError:
+            pass
 
     if category_filter != 'all':
         products_sales = products_sales.filter(product__category__slug=category_filter)
 
-    # Daily sales (last 7 days)
-    daily_sales = []
-    for i in range(6, -1, -1):
-        day = now - timedelta(days=i)
-        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-        day_sales = Order.objects.filter(
-            status='bajarildi',
-            created_at__range=[day_start, day_end]
-        ).aggregate(total=Coalesce(Sum('total_price'), Decimal('0')))['total']
-        daily_sales.append({
-            'day': day.strftime('%a, %d %b'),
-            'sales': float(day_sales),
-        })
-
-    # Monthly sales
-    monthly_sales = Order.objects.filter(
-        status='bajarildi',
-        created_at__gte=last_30_days
-    ).aggregate(total=Coalesce(Sum('total_price'), Decimal('0')))['total']
+    # Period sales with daily breakdown
+    period_sales = []
+    if date_filter == 'custom' and start_date and end_date:
+        try:
+            current_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=uzb_tz)
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(tzinfo=uzb_tz, hour=23, minute=59, second=59)
+            while current_date <= end_date:
+                day_end = current_date.replace(hour=23, minute=59, second=59)
+                day_orders = Order.objects.filter(created_at__range=[current_date, day_end])
+                day_sales = day_orders.aggregate(
+                    total=Coalesce(Sum('total_price', filter=Q(status='bajarildi')), Decimal('0')),
+                    count=Count('id'),
+                    completed_count=Count('id', filter=Q(status='bajarildi'))
+                )
+                period_sales.append({
+                    'date': current_date,
+                    'total': float(day_sales['total']),
+                    'count': day_sales['count'],
+                    'completed_count': day_sales['completed_count']
+                })
+                current_date += timedelta(days=1)
+        except ValueError:
+            pass
+    else:
+        for i in range(6, -1, -1):
+            day = today_start - timedelta(days=i)
+            day_end = day + timedelta(days=1)
+            day_orders = Order.objects.filter(created_at__range=[day, day_end])
+            day_sales = day_orders.aggregate(
+                total=Coalesce(Sum('total_price', filter=Q(status='bajarildi')), Decimal('0')),
+                count=Count('id'),
+                completed_count=Count('id', filter=Q(status='bajarildi'))
+            )
+            period_sales.append({
+                'date': day,
+                'total': float(day_sales['total']),
+                'count': day_sales['count'],
+                'completed_count': day_sales['completed_count']
+            })
 
     context = {
         'today_order_count': today_order_count,
+        'today_completed_count': today_completed_count,
+        'today_revenue': float(today_revenue),
         'today_status_distribution': today_status_distribution_list,
-        'today_top_products': today_top_products,
-        'yesterday_order_count': yesterday_order_count,
-        'yesterday_status_distribution': yesterday_status_distribution_list,
-        'yesterday_top_products': yesterday_top_products,
-        'total_sales': float(total_sales),
-        'total_orders': total_orders,
+        'period_total_orders': period_total_orders,
+        'period_completed_orders': period_completed_orders,
+        'period_total_sales': float(period_total_sales),
         'status_percentages': status_percentages,
-        'products_sales': products_sales[:5],
-        'daily_sales': daily_sales,
-        'monthly_sales': float(monthly_sales),
+        'products_sales': products_sales,
+        'period_sales': period_sales,
         'categories': Category.objects.all(),
         'date_filter': date_filter,
         'category_filter': category_filter,
+        'start_date': start_date,
+        'end_date': end_date,
         'last_updated': now,
     }
     return render(request, 'admin_panel/statistics.html', context)
+
+
+@login_required
+def admin_statistics_export(request):
+    date_filter = request.GET.get('date_filter', 'today')
+    category_filter = request.GET.get('category', 'all')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    uzb_tz = pytz.timezone('Asia/Tashkent')
+
+    orders_query = Order.objects.filter(status='bajarildi')
+
+    if date_filter == 'today':
+        today_start = timezone.now().astimezone(uzb_tz).replace(hour=0, minute=0, second=0, microsecond=0)
+        orders_query = orders_query.filter(created_at__range=[today_start, today_start + timedelta(days=1)])
+    elif date_filter == 'last_7_days':
+        orders_query = orders_query.filter(created_at__gte=timezone.now().astimezone(uzb_tz) - timedelta(days=7))
+    elif date_filter == 'last_30_days':
+        orders_query = orders_query.filter(created_at__gte=timezone.now().astimezone(uzb_tz) - timedelta(days=30))
+    elif date_filter == 'custom' and start_date and end_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=uzb_tz)
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(tzinfo=uzb_tz, hour=23, minute=59, second=59)
+            orders_query = orders_query.filter(created_at__range=[start_date, end_date])
+        except ValueError:
+            pass
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Sana', 'Buyurtma ID', 'Mijoz', 'Telefon', 'Manzil', 'Jami summa', 'Mahsulotlar'])
+
+    for order in orders_query:
+        items = OrderItem.objects.filter(order=order)
+        items_str = "; ".join([f"{item.product.name} (x{item.quantity})" for item in items])
+        writer.writerow([
+            order.created_at.astimezone(uzb_tz).strftime('%Y-%m-%d %H:%M:%S'),
+            order.id,
+            order.first_name,
+            order.phone,
+            f"{order.region}, {order.city}",
+            float(order.total_price),
+            items_str
+        ])
+
+    return response
+
 
 # Admin Products
 @login_required
@@ -203,11 +254,17 @@ def admin_products(request):
     products = Product.objects.all()
     return render(request, 'admin_panel/products.html', {'products': products})
 
+
 # Admin Categories
-@login_required
 def admin_categories(request):
     categories = Category.objects.all()
-    return render(request, 'admin_panel/categories.html', {'categories': categories})
+    total_products = sum(category.product_set.count() for category in categories)
+    context = {
+        'categories': categories,
+        'total_products': total_products,
+    }
+    return render(request, 'admin_panel/categories.html', context)
+
 
 # Admin Orders
 @login_required
@@ -234,12 +291,52 @@ def admin_orders(request):
     page_number = request.GET.get('page')
     orders_page = paginator.get_page(page_number)
 
+    # Status counts for all orders
+    status_counts = Order.objects.values('status').annotate(count=Count('id')).order_by('status')
+    status_counts_list = [
+        {
+            'status': item['status'],
+            'status_display': dict(Order.STATUS_CHOICES).get(item['status'], item['status']),
+            'count': item['count']
+        }
+        for item in status_counts
+    ]
+
     return render(request, 'admin_panel/orders.html', {
         'orders': orders_page,
         'status': status,
         'start_date': start_date,
         'end_date': end_date,
+        'status_counts': status_counts_list,
     })
+
+
+# Admin Orders by Status
+@login_required
+def orders_by_status(request, status):
+    orders = Order.objects.filter(status=status).order_by('-created_at')
+    paginator = Paginator(orders, 20)
+    page_number = request.GET.get('page')
+    orders_page = paginator.get_page(page_number)
+
+    status_display = dict(Order.STATUS_CHOICES).get(status, status)
+    status_counts = Order.objects.values('status').annotate(count=Count('id')).order_by('status')
+    status_counts_list = [
+        {
+            'status': item['status'],
+            'status_display': dict(Order.STATUS_CHOICES).get(item['status'], item['status']),
+            'count': item['count']
+        }
+        for item in status_counts
+    ]
+
+    return render(request, 'admin_panel/orders_by_status.html', {
+        'orders': orders_page,
+        'status': status,
+        'status_display': status_display,
+        'status_counts': status_counts_list,
+    })
+
 
 # Add Product
 @login_required
@@ -252,12 +349,10 @@ def add_product(request):
         image = request.FILES.get('image')
         category = Category.objects.get(id=category_id)
 
-        # Check if product with the same name already exists
         if Product.objects.filter(name=name).exists():
             messages.error(request, f"Mahsulot nomi '{name}' allaqachon mavjud! Iltimos, boshqa nom tanlang.")
             return redirect('add_product')
 
-        # Create product if name is unique
         Product.objects.create(
             category=category, name=name, description=description, price=price, image=image
         )
@@ -265,6 +360,7 @@ def add_product(request):
         return redirect('admin_products')
     categories = Category.objects.all()
     return render(request, 'admin_panel/products.html', {'categories': categories})
+
 
 # Edit Product
 @login_required
@@ -283,6 +379,7 @@ def edit_product(request, pk):
     categories = Category.objects.all()
     return render(request, 'admin_panel/products.html', {'product': product, 'categories': categories})
 
+
 # Delete Product
 @login_required
 def delete_product(request, pk):
@@ -293,27 +390,26 @@ def delete_product(request, pk):
         return redirect('admin_products')
     return render(request, 'admin_panel/products.html', {'product': product})
 
+
 # Add Category
 @login_required
 def add_category(request):
     if request.method == 'POST':
         name = request.POST['name']
-        # Check if category with the same name already exists
         if Category.objects.filter(name=name).exists():
             messages.error(request, f"Kategoriya nomi '{name}' allaqachon mavjud! Iltimos, boshqa nom tanlang.")
             return redirect('add_category')
-        # Generate a unique slug
         base_slug = slugify(name)
         slug = base_slug
         counter = 1
         while Category.objects.filter(slug=slug).exists():
             slug = f"{base_slug}-{counter}"
             counter += 1
-        # Create category with unique name and slug
         Category.objects.create(name=name, slug=slug)
         messages.success(request, "Kategoriya muvaffaqiyatli qo'shildi!")
         return redirect('admin_categories')
     return render(request, 'admin_panel/categories.html')
+
 
 # Edit Category
 @login_required
@@ -326,6 +422,7 @@ def edit_category(request, pk):
         return redirect('admin_categories')
     return render(request, 'admin_panel/categories.html', {'category': category})
 
+
 # Delete Category
 @login_required
 def delete_category(request, pk):
@@ -335,6 +432,7 @@ def delete_category(request, pk):
         messages.success(request, "Kategoriya muvaffaqiyatli o'chirildi!")
         return redirect('admin_categories')
     return render(request, 'admin_panel/categories.html', {'category': category})
+
 
 # Edit Order Status
 @login_required
@@ -352,6 +450,7 @@ def edit_order_status(request, pk):
         form = SimpleOrderForm(instance=order)
     return render(request, 'admin_panel/edit_order.html', {'form': form, 'order': order})
 
+
 # Delete Order
 @login_required
 def delete_order(request, order_id):
@@ -363,8 +462,9 @@ def delete_order(request, order_id):
         return redirect('admin_orders')
     return redirect('admin_orders')
 
+
 # Update Order Status (AJAX)
-@csrf_exempt  # Remove in production, use CSRF token
+@csrf_exempt
 @require_POST
 @login_required
 def update_order_status(request, pk):

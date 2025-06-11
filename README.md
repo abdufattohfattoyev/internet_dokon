@@ -1,2 +1,0 @@
-# internet_dokon
-zakaz

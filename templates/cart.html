@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Savat - Online Shop{% endblock %}
+{% block title %}Savat - Optimhalolmarket.uz{% endblock %}
 
 {% block extra_css %}
 <style>
     /* Mobile-first styles */
     .cart-container {
         padding: 15px;
-        padding-bottom: 120px; /* Extra space for sticky footer */
+        padding-bottom: 120px;
     }
 
     .cart-item-card {
@@ -17,6 +17,11 @@
         margin-bottom: 15px;
         background: white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease;
+    }
+
+    .cart-item-card:hover {
+        transform: translateY(-2px);
     }
 
     .product-info {
@@ -37,6 +42,7 @@
         font-weight: 600;
         font-size: 1.1rem;
         flex-grow: 1;
+        color: #333;
     }
 
     .price-row {
@@ -77,6 +83,11 @@
         font-size: 18px;
         background-color: #f8f9fa;
         border: 1px solid #ddd;
+        transition: background-color 0.2s ease;
+    }
+
+    .quantity-btn:hover {
+        background-color: #e9ecef;
     }
 
     .quantity-input {
@@ -84,6 +95,8 @@
         text-align: center;
         margin: 0 10px;
         font-weight: 600;
+        border-radius: 8px;
+        border: 1px solid #ddd;
     }
 
     .remove-btn {
@@ -95,6 +108,11 @@
         display: flex;
         align-items: center;
         gap: 5px;
+        transition: color 0.2s ease;
+    }
+
+    .remove-btn:hover {
+        color: #b02a37;
     }
 
     .cart-actions {
@@ -112,7 +130,7 @@
     .total-price {
         font-size: 1.3rem;
         font-weight: 700;
-        color: #dc3545;
+        color: var(--primary-color);
     }
 
     /* Toast notification */
@@ -121,7 +139,6 @@
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background: #28a745;
         color: white;
         padding: 10px 25px;
         border-radius: 30px;
@@ -143,17 +160,26 @@
     .updating {
         position: relative;
         opacity: 0.7;
+        pointer-events: none;
     }
 
     .updating:after {
         content: "";
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255,255,255,0.7);
-        z-index: 1;
+        top: 50%;
+        left: 50%;
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--primary-color);
+        border-top: 3px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
     /* Empty cart */
@@ -166,6 +192,33 @@
         font-size: 4rem;
         color: #ddd;
         margin-bottom: 20px;
+    }
+
+    /* Modal styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .modal-body {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    .modal-footer {
+        border-top: none;
+        padding-top: 0;
     }
 
     /* Desktop styles */
@@ -196,7 +249,7 @@
 <div class="cart-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Savat</h3>
-        <span class="badge bg-danger rounded-pill px-3 py-2" id="cart-count">{{ cart.cartitem_set.count }} ta</span>
+        <span class="badge bg-primary rounded-pill px-3 py-2" id="cart-count">{{ cart.cartitem_set.count }} ta</span>
     </div>
 
     <!-- Toast notification -->
@@ -219,19 +272,19 @@
                 <div class="quantity-control">
                     <span class="price-label">Soni:</span>
                     <div class="quantity-buttons">
-                        <button class="quantity-btn quantity-decrease">-</button>
+                        <button class="quantity-btn quantity-decrease" data-item-id="{{ item.id }}">-</button>
                         <input type="number" class="form-control quantity-input" value="{{ item.quantity }}" min="1" data-item-id="{{ item.id }}">
-                        <button class="quantity-btn quantity-increase">+</button>
+                        <button class="quantity-btn quantity-increase" data-item-id="{{ item.id }}">+</button>
                     </div>
                 </div>
 
                 <div class="price-row">
                     <span class="price-label">Jami:</span>
-                    <span class="price-value item-total">{{ item.get_total_price|floatformat:"0"}} so'm</span>
+                    <span class="price-value item-total">{{ item.get_total_price|floatformat:"0" }} so'm</span>
                 </div>
 
                 <div class="text-end mt-2">
-                    <button class="remove-btn" data-item-id="{{ item.id }}">
+                    <button class="remove-btn" data-item-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#removeConfirmModal">
                         <i class="fas fa-trash-alt"></i> O'chirish
                     </button>
                 </div>
@@ -264,26 +317,47 @@
             </a>
         </div>
     {% endif %}
+
+    <!-- Remove Confirmation Modal -->
+    <div class="modal fade" id="removeConfirmModal" tabindex="-1" aria-labelledby="removeConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeConfirmModalLabel">Mahsulotni o'chirish</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Ushbu mahsulotni savatdan o'chirishni xohlaysizmi?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Yo'q</button>
+                    <button type="button" class="btn btn-danger" id="confirmRemoveBtn">Ha, o'chirish</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    let currentItemId = null;
+
     // Format price with commas
     function formatPrice(price) {
-        return new Intl.NumberFormat('uz-UZ').format(price);
+        return new Intl.NumberFormat('uz-UZ').format(Math.round(parseFloat(price))) + " so'm";
     }
 
     // Show toast notification
     function showToast(message, type = 'success') {
         const toast = $('#update-toast');
-        toast.removeClass('bg-success bg-danger').addClass(`bg-${type}`);
-        toast.text(message).show();
-        setTimeout(() => toast.hide(), 3000);
+        toast.removeClass('bg-success bg-danger bg-info').addClass(`bg-${type}`);
+        toast.text(message).fadeIn(300);
+        setTimeout(() => toast.fadeOut(300), 3000);
     }
 
-    // Update quantity
+    // Update cart item
     function updateCartItem(input) {
         const itemId = input.data('item-id');
         const quantity = parseInt(input.val());
@@ -292,6 +366,7 @@ $(document).ready(function() {
         // Validate input
         if (isNaN(quantity) || quantity < 1) {
             input.val(input.data('old-value'));
+            showToast('Soni kamida 1 bo\'lishi kerak', 'danger');
             return;
         }
 
@@ -305,73 +380,63 @@ $(document).ready(function() {
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            data: { 'quantity': quantity },
+            data: { quantity: quantity },
             success: function(response) {
                 if (response.success) {
-                    // Update prices
-                    const itemTotal = formatPrice(response.item_total);
-                    const cartTotal = formatPrice(response.cart_total);
-
-                    itemCard.find('.item-total').text(itemTotal + " so'm");
-                    $('#cart-total').text(cartTotal + " so'm");
-                    $('#cart-count').text(response.cart_count);
-
-                    showToast('Savat yangilandi!');
+                    // Update UI
+                    itemCard.find('.item-total').text(formatPrice(response.item_total));
+                    $('#cart-total').text(formatPrice(response.cart_total));
+                    $('#cart-count').text(response.cart_count + ' ta');
+                    input.data('old-value', quantity);
+                    showToast('Savat yangilandi!', 'success');
                 } else {
-                    throw new Error(response.error || 'Invalid response');
+                    throw new Error(response.message || 'Invalid response');
                 }
             },
             error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.error || 'Xatolik yuz berdi';
+                const errorMsg = xhr.responseJSON?.message || 'Xatolik yuz berdi';
                 showToast(errorMsg, 'danger');
                 input.val(input.data('old-value'));
             },
             complete: function() {
                 input.prop('disabled', false);
                 itemCard.removeClass('updating');
-                input.data('old-value', input.val());
             }
         });
     }
 
-    // Remove item
+    // Remove cart item
     function removeCartItem(itemId) {
-        if (confirm("Ushbu mahsulotni savatdan o'chirishni istaysizmi?")) {
-            const itemCard = $(`.cart-item-card[data-item-id="${itemId}"]`);
-            itemCard.addClass('updating');
+        const itemCard = $(`.cart-item-card[data-item-id="${itemId}"]`);
+        itemCard.addClass('updating');
 
-            $.ajax({
-                url: `/cart/remove/${itemId}/`,
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        itemCard.fadeOut(300, function() {
-                            $(this).remove();
-
-                            const cartTotal = formatPrice(response.cart_total);
-                            $('#cart-total').text(cartTotal + " so'm");
-                            $('#cart-count').text(response.cart_count);
-
-                            if (response.cart_count === 0) {
-                                window.location.reload();
-                            }
-                        });
-
-                        showToast('Mahsulot o\'chirildi');
-                    } else {
-                        throw new Error(response.error || 'Invalid response');
-                    }
-                },
-                error: function(xhr) {
-                    const errorMsg = xhr.responseJSON?.error || 'Xatolik yuz berdi';
-                    showToast(errorMsg, 'danger');
-                    itemCard.removeClass('updating');
+        $.ajax({
+            url: `/cart/remove/${itemId}/`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    itemCard.fadeOut(300, function() {
+                        $(this).remove();
+                        $('#cart-total').text(formatPrice(response.cart_total));
+                        $('#cart-count').text(response.cart_count + ' ta');
+                        showToast('Mahsulot o\'chirildi', 'success');
+                        if (response.cart_count === 0) {
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    throw new Error(response.message || 'Invalid response');
                 }
-            });
-        }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Xatolik yuz berdi';
+                showToast(errorMsg, 'danger');
+                itemCard.removeClass('updating');
+            }
+        });
     }
 
     // Event handlers
@@ -395,9 +460,24 @@ $(document).ready(function() {
         $(this).data('old-value', $(this).val());
     });
 
-    $('.remove-btn').click(function(e) {
-        e.preventDefault();
-        removeCartItem($(this).data('item-id'));
+    $('.remove-btn').click(function() {
+        currentItemId = $(this).data('item-id');
+    });
+
+    $('#confirmRemoveBtn').click(function() {
+        if (currentItemId) {
+            removeCartItem(currentItemId);
+            $('#removeConfirmModal').modal('hide');
+            currentItemId = null;
+        }
+    });
+
+    // Format initial prices
+    $('.unit-price, .item-total, #cart-total').each(function() {
+        const price = parseFloat($(this).text().replace(/\s+/g, '').replace('so\'m', ''));
+        if (!isNaN(price)) {
+            $(this).text(formatPrice(price));
+        }
     });
 });
 </script>

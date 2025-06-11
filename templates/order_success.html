@@ -1,11 +1,187 @@
 {% extends 'base.html' %}
 
-{% block title %}Buyurtma muvaffaqiyatli - Online Shop{% endblock %}
+{% block title %}Buyurtma muvaffaqiyatli - Optimhalolmarket.uz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px 20px;
+        text-align: center;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.5s ease;
+    }
+
+    .success-icon {
+        font-size: 4rem;
+        color: var(--success-color);
+        margin-bottom: 20px;
+        animation: bounceIn 0.8s ease;
+    }
+
+    .success-title {
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 15px;
+        font-size: 1.8rem;
+    }
+
+    .success-message {
+        color: #475569;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .order-info {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .order-info p {
+        margin: 8px 0;
+        color: #475569;
+        font-size: 0.95rem;
+    }
+
+    .order-info strong {
+        color: var(--dark-color);
+    }
+
+    .contact-links {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+
+    .contact-links a {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+    .contact-links a:hover {
+        background-color: #f1f5f9;
+    }
+
+    .contact-links .phone-link {
+        font-family: monospace;
+        letter-spacing: 0.5px;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+
+    @media (max-width: 576px) {
+        .success-container {
+            padding: 20px 15px;
+            margin: 15px;
+        }
+
+        .success-title {
+            font-size: 1.5rem;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+        }
+
+        .contact-links {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-    <div class="container mt-5 text-center">
-        <h4>Buyurtma muvaffaqiyatli yuborildi!</h4>
-        <p>Tez orada siz bilan bog'lanamiz.</p>
-        <a href="{% url 'home' %}" class="btn btn-primary">Bosh sahifaga qaytish</a>
+<div class="success-container mt-5">
+    <i class="fas fa-check-circle success-icon"></i>
+    <h2 class="success-title">Buyurtma muvaffaqiyatli yuborildi!</h2>
+    <p class="success-message">
+        Rahmat! Buyurtmangiz qabul qilindi. Operatorimiz tez orada siz bilan bog'lanadi.
+        {% if order %}Buyurtma raqami: <strong>#{{ order.id }}</strong>.{% endif %}
+    </p>
+
+    {% if order %}
+        <div class="order-info">
+            <p><strong>Buyurtma raqami:</strong> #{{ order.id }}</p>
+            <p><strong>Umumiy summa:</strong> <span class="total-price" data-price="{{ order.total_price }}">{{ order.total_price }} so'm</span></p>
+            <p><strong>Taxminiy yetkazib berish:</strong> 1-3 ish kuni</p>
+        </div>
+    {% endif %}
+
+    <div class="contact-links">
+        <a href="tel:+998992010081" class="phone-link">
+            <i class="fas fa-phone"></i> +998 99 201 00 81
+        </a>
+        <a href="https://t.me/optimhalolmarket" target="_blank">
+            <i class="fab fa-telegram"></i> Telegram
+        </a>
     </div>
+
+    <div class="action-buttons">
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i> Bosh sahifaga qaytish
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Show success toast on page load
+    showToast('Buyurtma muvaffaqiyatli yuborildi!', 'success');
+
+    // Ensure phone link works on mobile
+    $('.phone-link').on('click', function(e) {
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
+            e.preventDefault();
+            showToast('Mobil qurilmadan telefon qilish uchun raqamni bosing!', 'info');
+        }
+    });
+});
+</script>
 {% endblock %}

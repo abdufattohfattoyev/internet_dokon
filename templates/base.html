@@ -3,50 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Online Shop{% endblock %}</title>
+    <title>{% block title %}Optimhalolmarket.uz{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #dc3545;
-            --primary-hover: #c82333;
-            --secondary-color: #6c757d;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --success-color: #28a745;
+            --primary-color: #2563eb;  /* Modern blue */
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --alert-success-bg: linear-gradient(135deg, #10b981, #34d399);
+            --alert-error-bg: linear-gradient(135deg, #ef4444, #f87171);
+            --alert-info-bg: linear-gradient(135deg, #3b82f6, #60a5fa);
+            --surface-color: #ffffff;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f5f7fa;
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
             margin: 0;
             padding: 0;
-            padding-bottom: 70px; /* Space for sticky footer */
+            padding-bottom: 60px;
+            color: #334155;
         }
 
         .navbar {
-            background: linear-gradient(90deg, var(--primary-color), #ff6b6b);
+            background: var(--surface-color);
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 10px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .navbar-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
         .navbar-brand {
             font-weight: 700;
-            color: #fff !important;
-            font-size: 1.5rem;
+            color: var(--dark-color) !important;
+            font-size: 1.4rem;
             display: flex;
             align-items: center;
+            text-decoration: none;
+            letter-spacing: -0.5px;
         }
 
         .navbar-brand i {
             margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .contact-dropdown .dropdown-toggle {
+            color: var(--dark-color);
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .contact-dropdown .dropdown-toggle:hover {
+            background-color: #f1f5f9;
+        }
+
+        .contact-dropdown .dropdown-menu {
+            min-width: 220px;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: var(--card-hover-shadow);
+            border: none;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            color: #334155;
+            text-decoration: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+        }
+
+        .contact-info:hover {
+            background-color: #f8fafc;
+            transform: translateX(2px);
+        }
+
+        .contact-info i {
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .contact-info span {
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .toast-container {
@@ -56,13 +134,85 @@
             z-index: 1050;
         }
 
-        /* Modern scrollbar */
+        .toast {
+            border-radius: 12px;
+            box-shadow: var(--card-hover-shadow);
+            border: none;
+            overflow: hidden;
+        }
+
+        /* Modern alerts */
+        .alert {
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--card-shadow);
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .alert-success {
+            background: var(--alert-success-bg);
+        }
+
+        .alert-danger {
+            background: var(--alert-error-bg);
+        }
+
+        .alert-info {
+            background: var(--alert-info-bg);
+        }
+
+        .alert-dismissible .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+
+        .alert-dismissible .btn-close:hover {
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        .alert.fade-out {
+            animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        /* Scrollbar styling */
         ::-webkit-scrollbar {
             width: 8px;
+            height: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #e2e8f0;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb {
@@ -70,13 +220,42 @@
             border-radius: 4px;
         }
 
-        @media (max-width: 576px) {
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
             .navbar-brand {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
+            }
+
+            .contact-dropdown .dropdown-toggle {
+                font-size: 0.85rem;
+                padding: 6px 10px;
             }
 
             body {
-                padding-bottom: 80px; /* More space for mobile footer */
+                padding-bottom: 70px;
+            }
+
+            .alert {
+                font-size: 0.9rem;
+                padding: 14px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-container {
+                padding: 0 15px;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            .navbar-brand i {
+                margin-right: 6px;
             }
         }
     </style>
@@ -85,20 +264,39 @@
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light">
-        <div class="container">
+        <div class="container navbar-container">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-shopping-bag"></i>
-                Online Shop
+                <i class="fas fa-store"></i>
+                Optim Halol Market
             </a>
+            <div class="contact-dropdown">
+                <button class="dropdown-toggle" type="button" id="contactDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-headset me-1"></i> Aloqa
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="contactDropdown">
+                    <li>
+                        <a href="tel:+998992010081" class="contact-info">
+                            <i class="fas fa-phone"></i>
+                            <span>+998 99 201 00 81</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://t.me/optimhalolmarket" target="_blank" class="contact-info">
+                            <i class="fab fa-telegram"></i>
+                            <span>Telegram</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
     <!-- Toast Notification Container -->
     <div class="toast-container">
-        <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
-            <div class="toast-header">
+        <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+            <div class="toast-header bg-primary text-white">
                 <strong class="me-auto">Savat</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body"></div>
         </div>
@@ -109,7 +307,15 @@
         <div class="container mt-3">
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
+                    <div class="d-flex align-items-center">
+                        <i class="fas
+                            {% if message.tags == 'success' %}fa-check-circle{% endif %}
+                            {% if message.tags == 'error' or message.tags == 'danger' %}fa-exclamation-circle{% endif %}
+                            {% if message.tags == 'info' %}fa-info-circle{% endif %}
+                            {% if message.tags == 'warning' %}fa-exclamation-triangle{% endif %}
+                            me-2"></i>
+                        <div>{{ message }}</div>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
@@ -127,13 +333,32 @@
     <!-- jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Initialize tooltips
         $(document).ready(function() {
+            // Initialize tooltips
             const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
             const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // Auto-dismiss alerts after 5 seconds
+            $('.alert-dismissible').each(function() {
+                const $alert = $(this);
+                setTimeout(function() {
+                    $alert.addClass('fade-out');
+                    setTimeout(function() {
+                        $alert.alert('close');
+                    }, 400); // Match animation duration
+                }, 5000);
+            });
+
+            // Format prices on page load
+            $('.product-price').each(function() {
+                const price = parseFloat($(this).text().replace(/\s+/g, '').replace('so\'m', ''));
+                if (!isNaN(price)) {
+                    const formattedPrice = Math.round(price).toLocaleString('uz-UZ');
+                    $(this).text(formattedPrice + ' so\'m');
+                }
+            });
         });
     </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-
