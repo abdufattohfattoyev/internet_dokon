@@ -7,4 +7,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('internet.urls')),
     path('admin-panel/', include('internet.admin_urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# static fayllar uchun yo'l qo'shish
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'static')

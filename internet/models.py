@@ -1,16 +1,15 @@
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)  # Added unique=True
-    slug = models.SlugField(unique=True, blank=True)
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-            # Ensure slug is unique by appending a counter if necessary
             base_slug = self.slug
             counter = 1
             while Category.objects.filter(slug=self.slug).exists():
@@ -23,20 +22,19 @@ class Category(models.Model):
 
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200, unique=True)  # Added unique=True
-    slug = models.SlugField(unique=True, blank=True)
+    name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(unique=True, blank=True, null=True)
     description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='products/')
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
-            # Ensure slug is unique by appending a counter if necessary
             base_slug = self.slug
             counter = 1
-            while Product.objects.filter(slug=self.slug).exists():
+            while Product.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
                 self.slug = f"{base_slug}-{counter}"
                 counter += 1
         super().save(*args, **kwargs)

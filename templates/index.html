@@ -336,16 +336,28 @@
     <div class="product-grid">
         {% for product in products %}
             <div class="product-card card">
+                {% if product.slug %}
                 <a href="{% url 'product_detail' product.slug %}">
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
                 </a>
+                    {% else %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
+                    {% endif %}
+
                 <div class="card-body">
                     <h6 class="card-title">{{ product.name }}</h6>
                     <p class="card-text product-price" data-price="{{ product.price }}">{{ product.price }} so'm</p>
                     <div class="product-actions">
-                        <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
-                            <i class="fas fa-eye"></i> Batafsil
-                        </a>
+                        {% if product.slug %}
+                            <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
+                                <i class="fas fa-eye"></i> Batafsil
+                            </a>
+                        {% else %}
+                            <span class="detail-btn disabled" title="Maʼlumot mavjud emas">
+                                <i class="fas fa-eye-slash"></i> Batafsil
+                            </span>
+                        {% endif %}
+
                         <form class="add-to-cart-form" data-product-id="{{ product.id }}">
                             {% csrf_token %}
                             <button type="submit" class="btn cart-btn add-to-cart {% if product in cart_products %}added{% endif %}" {% if product in cart_products %}disabled{% endif %}>

@@ -30,6 +30,7 @@ def filter_and_paginate_products(products, request, per_page=10):
             Q(name__icontains=query) | Q(description__icontains=query)
         )
 
+    products = products.order_by('-id')  # yoki kerakli ustun bo‘yicha
     paginator = Paginator(products, per_page)
     page_number = request.GET.get('page')
     products_page = paginator.get_page(page_number)
