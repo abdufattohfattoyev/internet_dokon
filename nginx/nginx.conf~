@@ -5,7 +5,7 @@ server {
     client_max_body_size 50M;
 
     location /media/ {
-        alias /app/media/;  # nginx konteyner ichida media fayllarga yo‘l
+        alias /app/media/;
         expires 30d;
         access_log off;
         add_header Cache-Control "public";

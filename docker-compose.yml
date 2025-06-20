@@ -7,7 +7,7 @@ services:
       - "8005:8005"
     volumes:
       - .:/app
-      - media-data:/app/media
+      - media-data:/app/media         # media fayllar uchun umumiy volume
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
@@ -23,8 +23,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - media-data:/app/media
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # nginx konfiguratsiyasi
+      - media-data:/app/media                              # shu volume nginxda ham bo'lishi kerak
     depends_on:
       - app
     networks:
@@ -35,4 +35,4 @@ networks:
     driver: bridge
 
 volumes:
-  media-data:
+  media-data:     # bu yerda volume e'lon qilinyapti
