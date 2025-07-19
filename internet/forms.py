@@ -18,11 +18,14 @@ class SimpleOrderForm(forms.ModelForm):
 class OrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['region'].choices = [('samarqand', 'Samarqand')]
-        self.fields['region'].initial = 'samarqand'
-        # Admin notes are not required in the checkout form
+        self.fields['region'].choices = [
+            ('', '--- Viloyat tanlang ---'),
+            ('samarqand', 'Samarqand'),
+            ('navoiy', 'Navoiy'),
+        ]
+        # self.fields['region'].initial = 'samarqand'  <-- Buni olib tashlash kerak
         self.fields['admin_notes'].required = False
-        self.fields['admin_notes'].widget = forms.HiddenInput()  # Hide in frontend
+        self.fields['admin_notes'].widget = forms.HiddenInput()
 
     class Meta:
         model = Order

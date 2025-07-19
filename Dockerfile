@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=appuser:appuser . .
 
+USER root
+RUN mkdir -p /app/staticfiles && chown -R appuser:appuser /app/staticfiles
 USER appuser
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8005", "--workers", "3", "--timeout", "120", "config.wsgi:application"]
+

@@ -31,11 +31,26 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         }
 
-        .product-card img {
+        .product-image-container {
             width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-bottom: 1px solid #eee;
+            height: 180px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
         }
 
         .product-card .card-body {
@@ -132,7 +147,7 @@
             background-color: var(--primary-hover);
         }
 
-        /* Category Tabs - Original Style */
+        /* Category Tabs */
         .category-tabs-container {
             position: sticky;
             top: 60px;
@@ -255,6 +270,19 @@
             border-color: var(--primary-color);
         }
 
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #adb5bd;
+            margin-bottom: 15px;
+        }
+
         /* Responsive Adjustments */
         @media (min-width: 768px) {
             .product-grid {
@@ -263,8 +291,8 @@
                 padding: 20px;
             }
 
-            .product-card img {
-                height: 180px;
+            .product-image-container {
+                height: 200px;
             }
 
             .product-actions {
@@ -282,8 +310,8 @@
                 grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             }
 
-            .product-card img {
-                height: 200px;
+            .product-image-container {
+                height: 220px;
             }
         }
 
@@ -318,7 +346,7 @@
         </form>
     </div>
 
-    <!-- Category Tabs - Original Structure -->
+    <!-- Category Tabs -->
     <div class="category-tabs-container">
         <ul class="nav category-tabs">
             <li class="nav-item">
@@ -336,33 +364,29 @@
     <div class="product-grid">
         {% for product in products %}
             <div class="product-card card">
-                {% if product.slug %}
-                <a href="{% url 'product_detail' product.slug %}">
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
-                </a>
-                    {% else %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
-                    {% endif %}
-
-                <div class="card-body">
-                    <h6 class="card-title">{{ product.name }}</h6>
-                    <p class="card-text product-price" data-price="{{ product.price }}">{{ product.price }} so'm</p>
-                    <div class="product-actions">
-                        {% if product.slug %}
-                            <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
-                                <i class="fas fa-eye"></i> Batafsil
+                <div class="product-image-container">
+                    {% with primary_image=product.get_primary_image %}
+                        {% if primary_image and primary_image.image and primary_image.image.url %}
+                            <a href="{% url 'product_detail' product.slug %}">
+                                <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" class="product-image">
                             </a>
                         {% else %}
-                            <span class="detail-btn disabled" title="Maʼlumot mavjud emas">
-                                <i class="fas fa-eye-slash"></i> Batafsil
-                            </span>
+                            <img src="/static/images/no-image.png" alt="Rasm mavjud emas" class="product-image">
                         {% endif %}
-
+                    {% endwith %}
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <p class="card-text product-price">{{ product.price }} so'm</p>
+                    <div class="product-actions">
+                        <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
+                            <i class="fas fa-eye"></i> Batafsil
+                        </a>
                         <form class="add-to-cart-form" data-product-id="{{ product.id }}">
                             {% csrf_token %}
                             <button type="submit" class="btn cart-btn add-to-cart {% if product in cart_products %}added{% endif %}" {% if product in cart_products %}disabled{% endif %}>
                                 <i class="fas {% if product in cart_products %}fa-check{% else %}fa-cart-plus{% endif %}"></i>
-                                {% if product in cart_products %}Qo‘shilgan{% else %}Savatga{% endif %}
+                                {% if product in cart_products %}Qo'shilgan{% else %}Savatga{% endif %}
                             </button>
                         </form>
                     </div>
@@ -455,7 +479,7 @@
                         } else {
                             showToast('Mahsulot savatga qo\'shildi!', 'success');
                             // Update button state
-                            button.html('<i class="fas fa-check"></i> Qo‘shilgan')
+                            button.html('<i class="fas fa-check"></i> Qo\'shilgan')
                                   .addClass('added')
                                   .prop('disabled', true);
                         }

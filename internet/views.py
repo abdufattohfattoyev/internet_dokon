@@ -30,16 +30,16 @@ def filter_and_paginate_products(products, request, per_page=10):
             Q(name__icontains=query) | Q(description__icontains=query)
         )
 
-    products = products.order_by('-id')  # yoki kerakli ustun bo‘yicha
+    products = products.order_by('created_at')  # Eng eski mahsulotlar boshida, eng yangilar oxirida
     paginator = Paginator(products, per_page)
     page_number = request.GET.get('page')
     products_page = paginator.get_page(page_number)
     return products_page
 
-
 def home(request):
     all_categories = Category.objects.all()
-    products = Product.objects.all()
+    products = Product.objects.select_related('category').all().order_by('created_at')  # Boshlang'ich saralash
+
     cart = get_cart(request)
     cart_products = [item.product for item in cart.cartitem_set.all()]
 
@@ -70,11 +70,12 @@ def home(request):
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
     cart = get_cart(request)
-    cart_products = [item.product for item in cart.cartitem_set.all()]
+    product_in_cart = cart.cartitem_set.filter(product=product).exists()
+
     return render(request, 'product_detail.html', {
         'product': product,
         'cart': cart,
-        'cart_products': cart_products
+        'product_in_cart': product_in_cart
     })
 
 
@@ -191,7 +192,6 @@ def remove_from_cart(request, item_id):
             'message': 'Xato yuz berdi, qayta urinib ko‘ring.'
         }, status=500)
 
-
 def create_order_items(order, cart_items):
     order_items = [
         OrderItem(
@@ -279,7 +279,9 @@ def get_cities(request):
     cities = {
         'samarqand': [
             {'id': 'samarqand_city', 'name': 'Samarqand shahri'},
-            {'id': 'kattaqurghon', 'name': 'Kattaqurghon'},
+            {'id': 'kattaqurghon_city', 'name': 'Kattaqurghon shahri'},
+            {'id': 'kattaqurghon_tuman', 'name': 'Kattaqurghon tumani'},
+            {'id': 'payshanba', 'name': 'Payshanba'},
             {'id': 'urgut', 'name': 'Urgut'},
             {'id': 'bulungur', 'name': 'Bulung‘ur'},
             {'id': 'jomboy', 'name': 'Jomboy'},
@@ -291,7 +293,18 @@ def get_cities(request):
             {'id': 'paxtachi', 'name': 'Paxtachi'},
             {'id': 'payariq', 'name': 'Payariq'},
             {'id': 'qoshrobod', 'name': 'Qoshrobod'},
-            {'id': 'toyloq', 'name': 'Toyloq'},
+            {'id': 'tayloq', 'name': 'Tayloq'},
+            {'id': 'chelak', 'name': 'Chelak'},
+            {'id': 'kushrobod', 'name': 'Kushrobod'},
+        ],
+        'navoiy': [
+            {'id': 'navoiy_city', 'name': 'Navoiy shahri'},
+            {'id': 'xatirchi', 'name': 'Xatirchi'},
+            {'id': 'karmana', 'name': 'Karmana'},
+            {'id': 'navbaxor', 'name': 'Navbaxor'},
+            {'id': 'nurota', 'name': 'Nurota'},
+            {'id': 'qiziltepa', 'name': 'Qiziltepa'},
+            {'id': 'zarafshon', 'name': 'Zarafshon'},
         ],
     }
     cities_list = cities.get(region.lower(), [])

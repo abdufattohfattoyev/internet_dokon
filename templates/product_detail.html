@@ -1,154 +1,179 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ product.name }} - Online Shop{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <div class="card product-detail-card shadow-sm border-0">
-            <!-- Product Image -->
-            <div class="product-image-container">
-                <img src="{{ product.image.url }}" class="card-img-top img-fluid" alt="{{ product.name }}" style="max-height: 400px; object-fit: cover; width: 100%;">
-            </div>
+<div class="container mt-4">
+    <div class="row">
+        <!-- Product Images -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="product-main-image ratio ratio-1x1 bg-light">
+                    {% with product.get_primary_image as primary_image %}
+                        {% if primary_image %}
+                        <img src="{{ primary_image.image.url }}" class="img-fluid p-3" alt="{{ product.name }}" style="object-fit: contain;">
+                        {% endif %}
+                    {% endwith %}
+                </div>
 
-            <!-- Product Details -->
-            <div class="card-body p-4">
-                <h2 class="card-title text-primary mb-3">{{ product.name }}</h2>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="text-success fw-bold">{{ product.price }} so'm</h4>
+                {% if product.images.count > 1 %}
+                <div class="p-3 border-top">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for image in product.images.all %}
+                        <a href="#" class="thumbnail-link" data-image="{{ image.image.url }}">
+                            <img src="{{ image.image.url }}" class="img-thumbnail {% if image.is_primary %}active{% endif %}" style="width: 80px; height: 80px; object-fit: cover;" alt="{{ product.name }} thumbnail">
+                        </a>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="product-description">
-                    <h6 class="text-muted mb-2">Tavsif:</h6>
-                    <p class="text-secondary">{{ product.description|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h1 class="h2 card-title mb-3">{{ product.name }}</h1>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="h4 text-success fw-bold">{{ product.price }} so'm</span>
+                        {% if product.old_price %}
+                        <span class="text-muted text-decoration-line-through ms-2">{{ product.old_price }} so'm</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Tavsif:</h6>
+                        <div class="product-description">{{ product.description|linebreaks }}</div>
+                    </div>
+
+                    <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                        {% csrf_token %}
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary w-100 add-to-cart {% if product_in_cart %}added{% endif %}" {% if product_in_cart %}disabled{% endif %}>
+                                    <i class="fas {% if product_in_cart %}fa-check{% else %}fa-cart-plus{% endif %} me-2"></i>
+                                    {% if product_in_cart %}Qo'shilgan{% else %}Savatga qo'shish{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="product-meta border-top pt-3 mt-4">
+                        <div class="d-flex">
+                            <span class="text-muted me-2">Kategoriya:</span>
+                            <a href="{{ product.category.get_absolute_url }}" class="text-decoration-none">{{ product.category.name }}</a>
+                        </div>
+                    </div>
+
                 </div>
-                <form class="add-to-cart-form mt-4" data-product-id="{{ product.id }}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary cart-btn add-to-cart w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Savatga qo'shish">
-                        <i class="fas fa-cart-plus me-2"></i> Savatga qo‘shish
-                    </button>
-                </form>
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block extra_js %}
-    <script>
-        $(document).ready(function() {
-            // Add to cart functionality
-            $('.add-to-cart-form').on('submit', function(e) {
-                e.preventDefault();
-                const form = $(this);
-                const productId = form.data('product-id');
-                const button = form.find('.add-to-cart');
-                const originalButtonText = button.html();
-                button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Qo‘shilmoqda...').prop('disabled', true);
-
-                $.ajax({
-                    url: `/cart/add/${productId}/`,
-                    method: 'POST',
-                    data: {
-                        'quantity': 1,
-                        'csrfmiddlewaretoken': '{{ csrf_token }}'
-                    },
-                    success: function(response) {
-                        $('#cart-count').text(response.cart_count);
-                        showToast('Savatga qo‘shildi!', 'success');
-                        button.html(originalButtonText).prop('disabled', false);
-                        if (response.cart_count > 0) {
-                            $('#checkout-footer').slideDown(200);
-                        }
-                    },
-                    error: function(xhr) {
-                        showToast('Xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.', 'danger');
-                        button.html(originalButtonText).prop('disabled', false);
-                    }
-                });
-            });
-
-            // Toast notification function
-            function showToast(message, type = 'success') {
-                const toast = $('#cartToast');
-                toast.removeClass('text-bg-success text-bg-danger').addClass(`text-bg-${type}`);
-                toast.find('.toast-body').text(message);
-                const bsToast = new bootstrap.Toast(toast, { delay: 2000 });
-                bsToast.show();
-            }
-        });
-    </script>
+</div>
 {% endblock %}
 
 {% block extra_css %}
-    <style>
-        .product-detail-card {
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
+<style>
+    .product-main-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
 
-        .product-image-container {
-            background: #f8f9fa;
-            padding: 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+    .product-main-image img {
+        max-height: 100%;
+        max-width: 100%;
+        transition: transform 0.3s ease;
+    }
+
+    .thumbnail-link:hover img,
+    .thumbnail-link.active img {
+        border-color: var(--bs-primary) !important;
+        box-shadow: 0 0 0 2px var(--bs-primary);
+    }
+
+    .product-description {
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .product-main-image {
+            min-height: 300px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .product-main-image {
+            min-height: 250px;
         }
 
         .card-title {
-            font-size: 1.75rem;
-            font-weight: 600;
+            font-size: 1.5rem;
         }
+    }
+</style>
+{% endblock %}
 
-        .product-description p {
-            font-size: 1rem;
-            line-height: 1.6;
+{% block extra_js %}
+<script>
+    $(function () {
+        // Rasm tanlash
+        $('.thumbnail-link').on('click', function (e) {
+            e.preventDefault();
+            const imageUrl = $(this).data('image');
+            $('.product-main-image img').attr('src', imageUrl);
+            $('.thumbnail-link img').removeClass('active');
+            $(this).find('img').addClass('active');
+        });
+
+        // Savatga qo‘shish
+        $('.add-to-cart-form').on('submit', function (e) {
+            e.preventDefault();
+            const form = $(this);
+            const productId = form.data('product-id');
+            const button = form.find('.add-to-cart');
+            const originalHTML = button.html();
+
+            button.html('<span class="spinner-border spinner-border-sm" role="status"></span>').prop('disabled', true);
+
+            $.ajax({
+                url: `/cart/add/${productId}/`,
+                method: 'POST',
+                data: {
+                    'quantity': 1,
+                    'csrfmiddlewaretoken': form.find('input[name="csrfmiddlewaretoken"]').val()
+                },
+                success: function (response) {
+                    $('#cart-count').text(response.cart_count);
+
+                    if (response.already_in_cart) {
+                        showToast('Bu mahsulot allaqachon savatda!', 'info');
+                    } else {
+                        showToast('Mahsulot savatga qo\'shildi!', 'success');
+                        button.html('<i class="fas fa-check me-2"></i>Qo\'shilgan').addClass('added').prop('disabled', true);
+                    }
+
+                    if (response.cart_count > 0) {
+                        $('#checkout-footer').fadeIn(200);
+                    }
+                },
+                error: function () {
+                    showToast('Xatolik yuz berdi. Qayta urinib ko‘ring.', 'danger');
+                    button.html(originalHTML).prop('disabled', false);
+                }
+            });
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = $('#cartToast');
+            toast.removeClass('text-bg-success text-bg-danger text-bg-info').addClass(`text-bg-${type}`);
+            toast.find('.toast-body').text(message);
+            new bootstrap.Toast(toast, { delay: 2000 }).show();
         }
-
-        .add-to-cart-form .btn {
-            padding: 0.75rem 1.5rem;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-        }
-
-        .add-to-cart-form .btn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 768px) {
-            .product-image-container img {
-                max-height: 250px;
-            }
-
-            .card-title {
-                font-size: 1.5rem;
-            }
-
-            .product-description p {
-                font-size: 0.95rem;
-            }
-
-            .add-to-cart-form .btn {
-                padding: 0.6rem 1rem;
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .product-image-container img {
-                max-height: 200px;
-            }
-
-            .card-title {
-                font-size: 1.25rem;
-            }
-
-            .product-description p {
-                font-size: 0.9rem;
-            }
-
-            .add-to-cart-form .btn {
-                padding: 0.5rem 0.8rem;
-                font-size: 0.95rem;
-            }
-        }
-    </style>
+    });
+</script>
 {% endblock %}

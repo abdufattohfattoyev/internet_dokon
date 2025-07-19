@@ -12,7 +12,9 @@ ALLOWED_HOSTS = [
     '147.93.130.94',
     'localhost',
     '127.0.0.1',
+    'app',  # Nginx proxy_pass da ishlatiladigan xizmat nomi
 ]
+
 
 # CSRF sozlamalari
 CSRF_TRUSTED_ORIGINS = [

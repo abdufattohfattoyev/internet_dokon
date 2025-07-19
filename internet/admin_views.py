@@ -1,5 +1,7 @@
 import csv
+import logging
 
+from _decimal import InvalidOperation
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.paginator import Paginator
@@ -15,9 +17,9 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from decimal import Decimal
 from .forms import OrderForm, SimpleOrderForm
-from .models import Product, Category, Order, OrderItem, Cart, CartItem
+from .models import Product, Category, Order, OrderItem, Cart, CartItem, ProductImage
 import pytz
-
+logger = logging.getLogger(__name__)
 
 # Admin Login View
 class AdminLoginView(LoginView):
@@ -251,7 +253,7 @@ def admin_statistics_export(request):
 # Admin Products
 @login_required
 def admin_products(request):
-    products = Product.objects.all()
+    products = Product.objects.select_related('category').all()
     return render(request, 'admin_panel/products.html', {'products': products})
 
 
@@ -339,46 +341,205 @@ def orders_by_status(request, status):
 
 
 # Add Product
+
 @login_required
 def add_product(request):
     if request.method == 'POST':
-        name = request.POST['name']
-        category_id = request.POST['category']
-        description = request.POST['description']
-        price = request.POST['price']
-        image = request.FILES.get('image')
-        category = Category.objects.get(id=category_id)
+        try:
+            name = request.POST.get('name')
+            category_id = request.POST.get('category')
+            description = request.POST.get('description')
+            price = request.POST.get('price')
+            images = request.FILES.getlist('images')
 
-        if Product.objects.filter(name=name).exists():
-            messages.error(request, f"Mahsulot nomi '{name}' allaqachon mavjud! Iltimos, boshqa nom tanlang.")
+            # Validatsiya
+            if not all([name, category_id, description, price]):
+                messages.error(request, "Barcha majburiy maydonlarni to'ldiring!")
+                logger.warning("Mahsulot qo'shishda maydonlar to'liq emas")
+                return redirect('add_product')
+
+            # Narxni tozalash va validatsiya qilish
+            try:
+                # Vergul va boshqa belgilarni olib tashlash
+                clean_price = ''.join(filter(str.isdigit, str(price)))
+                if not clean_price:
+                    messages.error(request, "Narx kiritilmagan!")
+                    logger.warning("Narx kiritilmagan")
+                    return redirect('add_product')
+
+                price = Decimal(clean_price)
+                if price <= 0:
+                    messages.error(request, "Narx musbat son bo'lishi kerak!")
+                    logger.warning(f"Noto'g'ri narx qiymati: {price}")
+                    return redirect('add_product')
+            except (InvalidOperation, ValueError) as e:
+                messages.error(request, "Narx to'g'ri formatda kiritilmagan!")
+                logger.warning(f"Noto'g'ri narx formati: {price}, xato: {e}")
+                return redirect('add_product')
+
+            # Kategoriyani olish
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                messages.error(request, "Tanlangan kategoriya topilmadi!")
+                logger.error(f"Kategoriya topilmadi: ID {category_id}")
+                return redirect('add_product')
+
+            # Mahsulot nomini tekshirish
+            if Product.objects.filter(name=name).exists():
+                messages.error(request, f"Mahsulot nomi '{name}' allaqachon mavjud! Iltimos, boshqa nom tanlang.")
+                logger.warning(f"Mahsulot nomi '{name}' allaqachon mavjud")
+                return redirect('add_product')
+
+            # Mahsulot yaratish
+            product = Product.objects.create(
+                category=category,
+                name=name,
+                description=description,
+                price=price
+            )
+
+            # Rasmlarni qo'shish
+            if not images:
+                product.delete()
+                messages.error(request, "Kamida bitta rasm qo'shish majburiy!")
+                logger.warning(f"Mahsulot #{product.id} uchun rasm qo'shilmadi, mahsulot o'chirildi")
+                return redirect('add_product')
+
+            for index, image in enumerate(images):
+                ProductImage.objects.create(
+                    product=product,
+                    image=image,
+                    is_primary=(index == 0)
+                )
+
+            messages.success(request, "Mahsulot muvaffaqiyatli qo'shildi!")
+            logger.info(f"Mahsulot #{product.id} muvaffaqiyatli qo'shildi")
+            return redirect('admin_products')
+
+        except Exception as e:
+            logger.error(f"Mahsulot qo'shishda xato: {str(e)}", exc_info=True)
+            messages.error(request, "Mahsulot qo'shishda xato yuz berdi. Iltimos, qayta urinib ko'ring.")
             return redirect('add_product')
 
-        Product.objects.create(
-            category=category, name=name, description=description, price=price, image=image
-        )
-        messages.success(request, "Mahsulot muvaffaqiyatli qo'shildi!")
-        return redirect('admin_products')
     categories = Category.objects.all()
-    return render(request, 'admin_panel/products.html', {'categories': categories})
+    return render(request, 'admin_panel/add_product.html', {'categories': categories})
 
 
-# Edit Product
 @login_required
 def edit_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    if request.method == 'POST':
-        product.name = request.POST['name']
-        product.category_id = request.POST['category']
-        product.description = request.POST['description']
-        product.price = request.POST['price']
-        if request.FILES.get('image'):
-            product.image = request.FILES['image']
-        product.save()
-        messages.success(request, "Mahsulot muvaffaqiyatli yangilandi!")
-        return redirect('admin_products')
-    categories = Category.objects.all()
-    return render(request, 'admin_panel/products.html', {'product': product, 'categories': categories})
 
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name', '').strip()
+            category_id = request.POST.get('category', '').strip()
+            description = request.POST.get('description', '').strip()
+            price = request.POST.get('price', '').strip()
+            images = request.FILES.getlist('images')
+            delete_images = request.POST.getlist('delete_images')
+            primary_image_id = request.POST.get('primary_image')
+
+            # Validatsiya: Bo'sh maydonlarni aniq tekshirish
+            errors = []
+            if not name:
+                errors.append("Mahsulot nomi kiritilmagan!")
+            if not category_id:
+                errors.append("Kategoriya tanlanmagan!")
+            if not description:
+                errors.append("Tavsif kiritilmagan!")
+            if not price:
+                errors.append("Narx kiritilmagan!")
+
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                logger.warning(f"Mahsulot #{pk} tahrirlashda maydonlar to'liq emas: {', '.join(errors)}")
+                return redirect('edit_product', pk=pk)
+
+            # Narxni tozalash va validatsiya qilish
+            try:
+                clean_price = ''.join(filter(str.isdigit, str(price)))
+                if not clean_price:
+                    messages.error(request, "Narx kiritilmagan yoki noto'g'ri formatda!")
+                    logger.warning(f"Mahsulot #{pk} tahrirlashda narx kiritilmagan yoki noto'g'ri formatda: {price}")
+                    return redirect('edit_product', pk=pk)
+
+                price = Decimal(clean_price)
+                if price <= 0:
+                    messages.error(request, "Narx musbat son bo'lishi kerak!")
+                    logger.warning(f"Mahsulot #{pk} tahrirlashda noto'g'ri narx qiymati: {price}")
+                    return redirect('edit_product', pk=pk)
+            except (InvalidOperation, ValueError) as e:
+                messages.error(request, "Narx to'g'ri formatda kiritilmagan (faqat raqamlar va vergul ishlatiladi)!")
+                logger.warning(f"Mahsulot #{pk} tahrirlashda noto'g'ri narx formati: {price}, xato: {e}")
+                return redirect('edit_product', pk=pk)
+
+            # Kategoriyani olish
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                messages.error(request, "Tanlangan kategoriya topilmadi!")
+                logger.error(f"Mahsulot #{pk} tahrirlashda kategoriya topilmadi: ID {category_id}")
+                return redirect('edit_product', pk=pk)
+
+            # Mahsulot nomini tekshirish
+            if Product.objects.filter(name=name).exclude(pk=pk).exists():
+                messages.error(request, f"Mahsulot nomi '{name}' allaqachon mavjud! Iltimos, boshqa nom tanlang.")
+                logger.warning(f"Mahsulot #{pk} tahrirlashda mahsulot nomi '{name}' allaqachon mavjud")
+                return redirect('edit_product', pk=pk)
+
+            # Mahsulotni yangilash
+            product.name = name
+            product.category = category
+            product.description = description
+            product.price = price
+            product.save()
+
+            # Rasmlarni o'chirish
+            if delete_images:
+                deleted_count = ProductImage.objects.filter(id__in=delete_images, product=product).delete()[0]
+                logger.info(f"Mahsulot #{pk} uchun {deleted_count} ta rasm o'chirildi")
+
+            # Yangi rasmlar qo'shish
+            if images:
+                for index, image in enumerate(images):
+                    ProductImage.objects.create(
+                        product=product,
+                        image=image,
+                        is_primary=(index == 0 and not product.images.filter(is_primary=True).exists())
+                    )
+                logger.info(f"Mahsulot #{pk} uchun {len(images)} ta yangi rasm qo'shildi")
+
+            # Asosiy rasmni o'zgartirish
+            if primary_image_id:
+                ProductImage.objects.filter(product=product).update(is_primary=False)
+                try:
+                    ProductImage.objects.filter(id=primary_image_id, product=product).update(is_primary=True)
+                    logger.info(f"Mahsulot #{pk} uchun asosiy rasm ID {primary_image_id} ga o'zgartirildi")
+                except ProductImage.DoesNotExist:
+                    logger.warning(f"Mahsulot #{pk} uchun asosiy rasm ID {primary_image_id} topilmadi")
+
+            # Kamida bitta rasm borligini tekshirish
+            if not product.images.exists():
+                messages.error(request, "Kamida bitta rasm bo'lishi kerak!")
+                logger.warning(f"Mahsulot #{pk} tahrirlashda rasm mavjud emas")
+                return redirect('edit_product', pk=pk)
+
+            messages.success(request, "Mahsulot muvaffaqiyatli yangilandi!")
+            logger.info(f"Mahsulot #{pk} muvaffaqiyatli yangilandi")
+            return redirect('admin_products')
+
+        except Exception as e:
+            logger.error(f"Mahsulot #{pk} tahrirlashda xato: {str(e)}", exc_info=True)
+            messages.error(request, "Mahsulot tahrirlashda xato yuz berdi. Iltimos, qayta urinib ko'ring.")
+            return redirect('edit_product', pk=pk)
+
+    categories = Category.objects.all()
+    return render(request, 'admin_panel/edit_product.html', {
+        'product': product,
+        'categories': categories
+    })
 
 # Delete Product
 @login_required

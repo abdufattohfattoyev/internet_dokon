@@ -129,6 +129,8 @@ dmypy.json
 .idea
 .env
 
-# Database files
-#*.db
-#data/*.db  # Bu fayllarni ham e'tibordan chetda qoldiradi
+ Database files
+*.db
+data/*.db  # Bu fayllarni ham e'tibordan chetda qoldiradi
+
+*~

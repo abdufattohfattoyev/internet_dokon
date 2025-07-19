@@ -1,12 +1,43 @@
-# shop/admin.py
 from django.contrib import admin
-from .models import Category, Product, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
 
-admin.site.register(Category)
-admin.site.register(Product)
-admin.site.register(Cart)
-admin.site.register(CartItem)
+# Inline model for ProductImage
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1  # Bo'sh formada nechta rasm qo'shish mumkinligi
+    fields = ('image', 'is_primary')
+    readonly_fields = ('image',)  # Rasmni faqat ko'rish uchun, tahrirlash uchun view ishlatiladi
+    can_delete = True  # Rasmlarni o'chirish imkoniyati
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'created_at')
+    search_fields = ('name',)
+    prepopulated_fields = {'slug': ('name',)}
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'price', 'created_at')
+    search_fields = ('name', 'description')
+    list_filter = ('category', 'created_at')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [ProductImageInline]  # ProductImage modelini inline sifatida qo'shish
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ('product', 'image', 'is_primary')
+    list_filter = ('product', 'is_primary')
+    search_fields = ('product__name',)
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('session_key', 'created_at')
+    search_fields = ('session_key',)
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ('cart', 'product', 'quantity')
+    search_fields = ('product__name',)
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -25,7 +56,6 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('status', 'total_price', 'created_at', 'admin_notes')
         }),
     )
-
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):

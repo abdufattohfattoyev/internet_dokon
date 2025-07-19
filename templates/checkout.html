@@ -72,6 +72,11 @@
     .price-text {
         color: #000; /* Default black color */
     }
+    .city-loading {
+        display: none;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
     @media (max-width: 768px) {
         .checkout-container {
             padding: 15px;
@@ -125,7 +130,9 @@
                     <div class="mb-4">
                         <label for="id_region" class="form-label">Viloyat*</label>
                         <select class="form-select" id="id_region" name="region" required>
-                            <option value="samarqand" selected>Samarqand</option>
+                            <option value="" selected>--- Viloyat tanlang ---</option>
+                            <option value="samarqand" {% if form.region.value == 'samarqand' %}selected{% endif %}>Samarqand</option>
+                            <option value="navoiy" {% if form.region.value == 'navoiy' %}selected{% endif %}>Navoiy</option>
                         </select>
                         {% if form.region.errors %}
                             <div class="text-danger small mt-1">{{ form.region.errors }}</div>
@@ -135,8 +142,8 @@
                     <!-- Shahar/Tuman -->
                     <div class="mb-4">
                         <label for="id_city" class="form-label">Shahar/Tuman*</label>
-                        <select class="form-select" id="id_city" name="city" required>
-                            <option value="" selected disabled>--- Shahar/Tuman tanlang ---</option>
+                        <select class="form-select" id="id_city" name="city" required disabled>
+                            <option value="" selected>--- Avval viloyat tanlang ---</option>
                             {% if form.city.value %}
                                 <option value="{{ form.city.value }}" selected>{{ form.city.value }}</option>
                             {% endif %}
@@ -227,14 +234,23 @@ $(document).ready(function() {
         }
     });
 
-    // Samarqand tumanlarini yuklash
-    function loadSamarqandCities() {
+    // Viloyat o'zgarganda shaharlarni yuklash
+    $('#id_region').on('change', function() {
+        const selectedRegion = $(this).val();
+        if (selectedRegion) {
+            loadCitiesForRegion(selectedRegion);
+        } else {
+            resetCitySelect();
+        }
+    });
+
+    // Shaharlarni yuklash funksiyasi
+    function loadCitiesForRegion(region) {
         const citySelect = $('#id_city');
-        const region = 'samarqand';
 
         $('#city-loading').show();
         citySelect.prop('disabled', true);
-        citySelect.html('<option value="" selected disabled>--- Yuklanmoqda ---</option>');
+        citySelect.html('<option value="" selected>--- Yuklanmoqda ---</option>');
 
         $.ajax({
             url: '/get-cities/',
@@ -242,7 +258,7 @@ $(document).ready(function() {
             data: { 'region': region },
             dataType: 'json',
             success: function(response) {
-                citySelect.html('<option value="" selected disabled>--- Shahar/Tuman tanlang ---</option>');
+                citySelect.html('<option value="" selected>--- Shahar/Tuman tanlang ---</option>');
                 if (response.cities && response.cities.length > 0) {
                     $.each(response.cities, function(index, city) {
                         citySelect.append($('<option>', {
@@ -252,7 +268,7 @@ $(document).ready(function() {
                     });
                     citySelect.prop('disabled', false);
                 } else {
-                    citySelect.html('<option value="" disabled>Tumanlar topilmadi</option>');
+                    citySelect.html('<option value="">Tumanlar topilmadi</option>');
                 }
                 // Preselect city if it exists
                 {% if form.city.value %}
@@ -261,7 +277,7 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error);
-                citySelect.html('<option value="" disabled>--- Xatolik yuz berdi ---</option>');
+                citySelect.html('<option value="">--- Xatolik yuz berdi ---</option>');
                 citySelect.prop('disabled', false);
             },
             complete: function() {
@@ -270,8 +286,26 @@ $(document).ready(function() {
         });
     }
 
-    // Yuklashni ishga tushirish
-    loadSamarqandCities();
+    // Shahar selectini qayta tiklash
+    function resetCitySelect() {
+        const citySelect = $('#id_city');
+        citySelect.html('<option value="" selected>--- Avval viloyat tanlang ---</option>');
+        citySelect.prop('disabled', true);
+    }
+
+    // Sahifa yuklanganda, agar viloyat tanlangan bo'lsa, shaharlarni yuklash
+    const initialRegion = $('#id_region').val();
+    if (initialRegion) {
+        loadCitiesForRegion(initialRegion);
+    } else {
+        resetCitySelect();
+    }
+
+    // Preselect region if it exists
+    {% if form.region.value %}
+        $('#id_region').val('{{ form.region.value|safe }}');
+        loadCitiesForRegion('{{ form.region.value|safe }}');
+    {% endif %}
 });
 </script>
 {% endblock %}

@@ -7,7 +7,8 @@ services:
       - "8005:8005"
     volumes:
       - .:/app
-      - media-data:/app/media         # media fayllar uchun umumiy volume
+      - ./media:/app/media
+      - static-data:/app/staticfiles
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
@@ -22,9 +23,12 @@ services:
     image: nginx:latest
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # nginx konfiguratsiyasi
-      - media-data:/app/media                              # shu volume nginxda ham bo'lishi kerak
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - media-data:/app/media
+      - static-data:/app/staticfiles       # STATIC volume ulash
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - app
     networks:
@@ -35,4 +39,6 @@ networks:
     driver: bridge
 
 volumes:
-  media-data:     # bu yerda volume e'lon qilinyapti
+  media-data:
+  static-data:      # STATIC volume e'lon qilinadi
+
