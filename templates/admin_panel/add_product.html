@@ -1,0 +1,357 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="fas fa-plus me-2"></i>Yangi mahsulot qo'shish
+    </h1>
+    <a href="{% url 'admin_products' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Orqaga
+    </a>
+</div>
+
+{% if messages %}
+    <div class="alert-container mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body p-3 p-sm-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-3">
+                <!-- Mahsulot nomi -->
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-tag me-1 text-primary"></i>Mahsulot nomi *
+                    </label>
+                    <input type="text" name="name" class="form-control" 
+                           placeholder="Mahsulot nomini kiriting" required>
+                    <div class="form-text">Mahsulot nomini aniq va tushunarli kiriting</div>
+                </div>
+
+                <!-- Kategoriya -->
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-list me-1 text-primary"></i>Kategoriya *
+                    </label>
+                    <select name="category" class="form-select" required>
+                        <option value="">Kategoriya tanlang</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if not categories %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Avval kategoriya yarating
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Narx -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-dollar-sign me-1 text-primary"></i>Narx (UZS) *
+                    </label>
+                    <div class="input-group">
+                        <input type="text" name="price" id="priceInput" class="form-control" 
+                               placeholder="Masalan: 25,000" required>
+                        <span class="input-group-text">UZS</span>
+                    </div>
+                    <div class="form-text">Narxni vergul bilan yoki vergulsiz kiriting</div>
+                </div>
+
+                <!-- Tavsif -->
+                <div class="col-12">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-align-left me-1 text-primary"></i>Tavsif *
+                    </label>
+                    <textarea name="description" class="form-control" rows="4" 
+                              placeholder="Mahsulot haqida batafsil ma'lumot kiriting" required></textarea>
+                    <div class="form-text">Mahsulotning asosiy xususiyatlari va foydalari haqida yozing</div>
+                </div>
+
+                <!-- Rasmlar bo'limi -->
+                <div class="col-12">
+                    <div class="card bg-light border-0">
+                        <div class="card-header bg-primary text-white d-flex align-items-center">
+                            <i class="fas fa-images me-2"></i>
+                            <h6 class="mb-0">Mahsulot rasmlari *</h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- Rasm yuklash qismi -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="form-label mb-0 fw-semibold">Rasmlar yuklash</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="addImageBtn">
+                                        <i class="fas fa-plus me-1"></i>Yana rasm qo'shish
+                                    </button>
+                                </div>
+                                
+                                <div id="imageInputsContainer">
+                                    <!-- Birinchi rasm inputi (majburiy) -->
+                                    <div class="image-input-group mb-3">
+                                        <div class="row g-2">
+                                            <div class="col-9">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-primary text-white">
+                                                        <i class="fas fa-star"></i>
+                                                    </span>
+                                                    <input type="file" name="images" class="form-control image-input" 
+                                                           accept="image/*" required>
+                                                </div>
+                                                <div class="form-text">
+                                                    <i class="fas fa-star text-warning me-1"></i>
+                                                    Bu rasm asosiy rasm sifatida ishlatiladi
+                                                </div>
+                                            </div>
+                                            <div class="col-3">
+                                                <button type="button" class="btn btn-outline-danger w-100 remove-image-btn" disabled>
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Eslatma:</strong> Kamida 1 ta rasm yuklash majburiy. Birinchi yuklangan rasm asosiy rasm bo'ladi.
+                                </div>
+                            </div>
+
+                            <!-- Rasmlarni ko'rish qismi -->
+                            <div class="border-top pt-3">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-eye me-1"></i>Yuklangan rasmlar
+                                </h6>
+                                <div id="newImagesPreview" class="row g-2">
+                                    <div class="col-12 text-center text-muted">
+                                        <i class="fas fa-image fa-2x mb-2"></i>
+                                        <p class="mb-0">Rasmlar tanlangandan keyin bu yerda ko'rinadi</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tugmalar -->
+                <div class="col-12">
+                    <hr class="my-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'admin_products' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Bekor qilish
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Mahsulot saqlash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let imageInputCount = 1;
+
+    // Narxni formatlash funksiyalari
+    function formatPrice(value) {
+        const numericValue = value.replace(/[^\d]/g, '');
+        if (!numericValue) return '';
+        return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function cleanPrice(value) {
+        return value.replace(/[^\d]/g, '');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Narx inputini formatlash
+        const priceInput = document.getElementById('priceInput');
+        if (priceInput) {
+            priceInput.addEventListener('input', function(e) {
+                const cursorPosition = e.target.selectionStart;
+                const oldValue = e.target.value;
+                const newValue = formatPrice(e.target.value);
+                e.target.value = newValue;
+                
+                // Kursorni to'g'ri joyga qo'yish
+                const lengthDifference = newValue.length - oldValue.length;
+                const newCursorPosition = cursorPosition + lengthDifference;
+                e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+            });
+
+            // Formani yuborishdan oldin narxni tozalash
+            const form = priceInput.closest('form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'price';
+                    hiddenInput.value = cleanPrice(priceInput.value);
+                    form.appendChild(hiddenInput);
+                    priceInput.disabled = true;
+                });
+            }
+        }
+
+        // Birinchi rasm inputiga event listener qo'shish
+        const firstImageInput = document.querySelector('.image-input');
+        if (firstImageInput) {
+            firstImageInput.addEventListener('change', handleImagePreview);
+        }
+    });
+
+    // Yangi rasm input qo'shish
+    document.getElementById('addImageBtn').addEventListener('click', function() {
+        imageInputCount++;
+        const container = document.getElementById('imageInputsContainer');
+        const newInputGroup = document.createElement('div');
+        newInputGroup.className = 'image-input-group mb-3';
+        newInputGroup.innerHTML = `
+            <div class="row g-2">
+                <div class="col-9">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-image"></i>
+                        </span>
+                        <input type="file" name="images" class="form-control image-input" accept="image/*">
+                    </div>
+                    <div class="form-text">Qo'shimcha rasm</div>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-outline-danger w-100 remove-image-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(newInputGroup);
+
+        // Yangi inputga event listener qo'shish
+        const newInput = newInputGroup.querySelector('.image-input');
+        newInput.addEventListener('change', handleImagePreview);
+
+        // O'chirish tugmasiga event listener qo'shish
+        const removeBtn = newInputGroup.querySelector('.remove-image-btn');
+        removeBtn.addEventListener('click', function() {
+            newInputGroup.remove();
+            updateImagePreview();
+        });
+    });
+
+    // Rasm preview funksiyasi
+    function handleImagePreview() {
+        updateImagePreview();
+    }
+
+    function updateImagePreview() {
+        const preview = document.getElementById('newImagesPreview');
+        preview.innerHTML = '';
+        
+        const imageInputs = document.querySelectorAll('.image-input');
+        let hasImages = false;
+
+        imageInputs.forEach((input, index) => {
+            const files = input.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    hasImages = true;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-6 col-md-3 col-lg-2';
+                        col.innerHTML = `
+                            <div class="card border-0 shadow-sm">
+                                <div class="position-relative">
+                                    <img src="${e.target.result}" class="card-img-top" 
+                                         style="height: 120px; object-fit: cover;" alt="Preview">
+                                    ${index === 0 && i === 0 ? 
+                                        '<span class="badge bg-warning position-absolute top-0 start-0 m-1"><i class="fas fa-star"></i> Asosiy</span>' : 
+                                        '<span class="badge bg-secondary position-absolute top-0 start-0 m-1">Qo\'shimcha</span>'
+                                    }
+                                </div>
+                                <div class="card-body p-2 text-center">
+                                    <small class="text-muted">Rasm ${index + 1}</small>
+                                </div>
+                            </div>
+                        `;
+                        preview.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        // Agar rasm yo'q bo'lsa, placeholder ko'rsatish
+        if (!hasImages) {
+            preview.innerHTML = `
+                <div class="col-12 text-center text-muted py-4">
+                    <i class="fas fa-image fa-3x mb-3"></i>
+                    <p class="mb-0">Rasmlar tanlangandan keyin bu yerda ko'rinadi</p>
+                </div>
+            `;
+        }
+    }
+</script>
+
+<style>
+    .image-input-group:first-child .remove-image-btn {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .card-img-top {
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+
+    #priceInput {
+        font-family: monospace;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    #priceInput:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .alert-container .alert {
+        border: none;
+        border-radius: 8px;
+    }
+
+    .form-label {
+        color: #495057;
+    }
+
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    .input-group-text {
+        border-color: #ced4da;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-danger:hover {
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
