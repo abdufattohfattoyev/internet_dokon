@@ -115,3 +115,4 @@ LOGOUT_REDIRECT_URL = '/admin-panel/login/'
 
 TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = config('TELEGRAM_CHAT_ID')
+AUTOSLUG_SLUGIFY_FUNCTION = 'django.utils.text.slugify'
