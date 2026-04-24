@@ -146,14 +146,16 @@ class Order(models.Model):
     )
     first_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
-    region = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    address = models.TextField()
+    region = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    address = models.TextField(blank=True)
     notes = models.TextField(blank=True, null=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='yangi')
     created_at = models.DateTimeField(auto_now_add=True)
     admin_notes = models.TextField(blank=True, null=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Buyurtma'

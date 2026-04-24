@@ -1,179 +1,239 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}{{ product.name }} - Online Shop{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <!-- Product Images -->
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="product-main-image ratio ratio-1x1 bg-light">
-                    {% with product.get_primary_image as primary_image %}
-                        {% if primary_image %}
-                        <img src="{{ primary_image.image.url }}" class="img-fluid p-3" alt="{{ product.name }}" style="object-fit: contain;">
-                        {% endif %}
-                    {% endwith %}
-                </div>
-
-                {% if product.images.count > 1 %}
-                <div class="p-3 border-top">
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for image in product.images.all %}
-                        <a href="#" class="thumbnail-link" data-image="{{ image.image.url }}">
-                            <img src="{{ image.image.url }}" class="img-thumbnail {% if image.is_primary %}active{% endif %}" style="width: 80px; height: 80px; object-fit: cover;" alt="{{ product.name }} thumbnail">
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Product Details -->
-        <div class="col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h1 class="h2 card-title mb-3">{{ product.name }}</h1>
-
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="h4 text-success fw-bold">{{ product.price }} so'm</span>
-                        {% if product.old_price %}
-                        <span class="text-muted text-decoration-line-through ms-2">{{ product.old_price }} so'm</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-4">
-                        <h6 class="text-muted mb-2">Tavsif:</h6>
-                        <div class="product-description">{{ product.description|linebreaks }}</div>
-                    </div>
-
-                    <form class="add-to-cart-form" data-product-id="{{ product.id }}">
-                        {% csrf_token %}
-                        <div class="row g-2 mb-3">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary w-100 add-to-cart {% if product_in_cart %}added{% endif %}" {% if product_in_cart %}disabled{% endif %}>
-                                    <i class="fas {% if product_in_cart %}fa-check{% else %}fa-cart-plus{% endif %} me-2"></i>
-                                    {% if product_in_cart %}Qo'shilgan{% else %}Savatga qo'shish{% endif %}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <div class="product-meta border-top pt-3 mt-4">
-                        <div class="d-flex">
-                            <span class="text-muted me-2">Kategoriya:</span>
-                            <a href="{{ product.category.get_absolute_url }}" class="text-decoration-none">{{ product.category.name }}</a>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+{% block title %}{{ product.name }} — Optim Halol Market{% endblock %}
 
 {% block extra_css %}
 <style>
-    .product-main-image {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
+.pd-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 120px; }
+@media(min-width:768px) { .pd-wrap { padding: 28px 24px 120px; } }
 
-    .product-main-image img {
-        max-height: 100%;
-        max-width: 100%;
-        transition: transform 0.3s ease;
-    }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--ink-3); font-size: .85rem; font-weight: 600;
+  margin-bottom: 20px;
+  padding: 7px 16px;
+  background: var(--surface);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  transition: var(--t);
+}
+.back-btn:hover { color: var(--primary); border-color: rgba(22,163,74,.3); background: var(--primary-xl); }
 
-    .thumbnail-link:hover img,
-    .thumbnail-link.active img {
-        border-color: var(--bs-primary) !important;
-        box-shadow: 0 0 0 2px var(--bs-primary);
-    }
+.pd-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media(min-width:768px) { .pd-grid { grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; } }
+@media(min-width:1024px) { .pd-grid { grid-template-columns: 480px 1fr; } }
 
-    .product-description {
-        line-height: 1.6;
-    }
+/* Image card */
+.pd-img-card {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-sm);
+}
+.pd-main-img {
+  width: 100%; aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: var(--bg); overflow: hidden;
+}
+.pd-main-img img {
+  max-width: 100%; max-height: 340px; object-fit: contain;
+  transition: transform .4s ease;
+}
+.pd-main-img:hover img { transform: scale(1.05); }
+.pd-thumbs {
+  display: flex; gap: 8px; padding: 12px 16px;
+  border-top: 1px solid var(--line-soft); flex-wrap: wrap; background: var(--surface-2);
+}
+.thumb-link {
+  width: 60px; height: 60px;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  transition: var(--t); flex-shrink: 0;
+}
+.thumb-link img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-link:hover, .thumb-link.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22,163,74,.15);
+}
 
-    @media (max-width: 768px) {
-        .product-main-image {
-            min-height: 300px;
-        }
-    }
+/* Info panel */
+.pd-info { display: flex; flex-direction: column; gap: 16px; }
+.pd-cat-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-l); color: var(--primary);
+  padding: 5px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700;
+  text-decoration: none; width: fit-content; transition: var(--t);
+}
+.pd-cat-badge:hover { background: var(--primary); color: #fff; }
+.pd-name { font-size: 1.35rem; font-weight: 800; color: var(--ink); line-height: 1.3; margin: 0; }
+@media(min-width:768px) { .pd-name { font-size: 1.6rem; } }
+.pd-price { font-size: 1.9rem; font-weight: 900; color: var(--primary); letter-spacing: -.5px; line-height: 1; }
+.pd-desc-box {
+  background: var(--surface-2);
+  border-radius: var(--r-lg); padding: 16px; border: 1px solid var(--line);
+}
+.pd-desc-label {
+  font-size: .75rem; font-weight: 700; color: var(--ink-4);
+  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 9px;
+}
+.pd-desc-body { font-size: .9rem; color: var(--ink-3); line-height: 1.75; }
+.pd-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.meta-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 13px; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 20px; font-size: .8rem; color: var(--ink-3); font-weight: 500;
+}
+.meta-pill i { color: var(--primary); font-size: .78rem; }
 
-    @media (max-width: 576px) {
-        .product-main-image {
-            min-height: 250px;
-        }
+/* Buttons */
+.btn-add-big {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 15px;
+  border-radius: var(--r-lg);
+  font-weight: 700; font-size: 1rem;
+  border: none; cursor: pointer;
+  background: var(--primary); color: #fff;
+  box-shadow: 0 4px 16px rgba(22,163,74,.3);
+  transition: var(--t); font-family: var(--font);
+}
+.btn-add-big:hover { background: var(--primary-d); box-shadow: 0 6px 24px rgba(22,163,74,.4); transform: translateY(-1px); color: #fff; }
+.btn-add-big.in-cart { background: var(--surface-2); color: var(--primary); box-shadow: none; border: 1.5px solid rgba(22,163,74,.3); }
+.btn-add-big.in-cart:hover { background: #fef2f2; color: var(--red); border-color: rgba(239,68,68,.3); transform: none; box-shadow: none; }
+.btn-add-big.loading { opacity: .7; cursor: not-allowed; }
 
-        .card-title {
-            font-size: 1.5rem;
-        }
-    }
+.btn-go-cart {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px;
+  border-radius: var(--r-lg);
+  font-weight: 700; font-size: .92rem;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  color: var(--ink-3);
+  text-decoration: none; transition: var(--t);
+}
+.btn-go-cart:hover { border-color: rgba(22,163,74,.35); color: var(--primary); background: var(--primary-xl); }
+
+/* Mobile: stack image above info */
+@media(max-width:767px) {
+  .pd-main-img { aspect-ratio: 1; padding: 16px; }
+  .pd-price { font-size: 1.5rem; }
+  .pd-name  { font-size: 1.15rem; }
+}
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="pd-wrap">
+  <a href="javascript:history.back()" class="back-btn">
+    <i class="fas fa-arrow-left"></i> Orqaga
+  </a>
+
+  <div class="pd-grid">
+    <!-- Image -->
+    <div class="pd-img-card">
+      <div class="pd-main-img">
+        {% with img=product.get_primary_image %}
+          {% if img and img.image %}
+            <img src="{{ img.image.url }}" alt="{{ product.name }}" id="mainImg">
+          {% else %}
+            <img src="/static/images/no-image.png" alt="Rasm yo'q" id="mainImg">
+          {% endif %}
+        {% endwith %}
+      </div>
+      {% if product.images.count > 1 %}
+      <div class="pd-thumbs">
+        {% for image in product.images.all %}
+        <div class="thumb-link {% if image.is_primary %}active{% endif %}" data-img="{{ image.image.url }}">
+          <img src="{{ image.image.url }}" alt="thumbnail">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="pd-info">
+      <a href="{% url 'category_detail' product.category.slug %}" class="pd-cat-badge">
+        <i class="fas fa-tag"></i> {{ product.category.name }}
+      </a>
+      <h1 class="pd-name">{{ product.name }}</h1>
+      <div class="pd-price product-price">{{ product.price }} so'm</div>
+
+      {% if product.description %}
+      <div class="pd-desc-box">
+        <div class="pd-desc-label"><i class="fas fa-align-left me-1"></i>Tavsif</div>
+        <div class="pd-desc-body">{{ product.description|linebreaks }}</div>
+      </div>
+      {% endif %}
+
+      <div class="pd-meta">
+        <span class="meta-pill"><i class="fas fa-layer-group"></i>{{ product.category.name }}</span>
+        <span class="meta-pill"><i class="fas fa-check-circle"></i>Mavjud</span>
+      </div>
+
+      <button class="btn-add-big toggle-cart {% if product_in_cart %}in-cart{% endif %}"
+              data-product-id="{{ product.id }}">
+        <i class="fas {% if product_in_cart %}fa-check{% else %}fa-cart-plus{% endif %} fa-lg"></i>
+        {% if product_in_cart %}Savatda (olib tashlash){% else %}Savatga qo'shish{% endif %}
+      </button>
+
+      <a href="{% url 'cart_detail' %}" class="btn-go-cart">
+        <i class="fas fa-shopping-bag"></i> Savatni ko'rish
+      </a>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    $(function () {
-        // Rasm tanlash
-        $('.thumbnail-link').on('click', function (e) {
-            e.preventDefault();
-            const imageUrl = $(this).data('image');
-            $('.product-main-image img').attr('src', imageUrl);
-            $('.thumbnail-link img').removeClass('active');
-            $(this).find('img').addClass('active');
-        });
+$(function() {
+  $('.thumb-link').on('click', function() {
+    $('#mainImg').attr('src', $(this).data('img'));
+    $('.thumb-link').removeClass('active');
+    $(this).addClass('active');
+  });
 
-        // Savatga qo‘shish
-        $('.add-to-cart-form').on('submit', function (e) {
-            e.preventDefault();
-            const form = $(this);
-            const productId = form.data('product-id');
-            const button = form.find('.add-to-cart');
-            const originalHTML = button.html();
+  $(document).on('click', '.toggle-cart', function () {
+    const btn = $(this), id = btn.data('product-id');
+    if (btn.hasClass('loading')) return;
+    const inCart = btn.hasClass('in-cart');
+    btn.addClass('loading').html('<i class="fas fa-spinner fa-spin fa-lg"></i> Yuklanmoqda...');
 
-            button.html('<span class="spinner-border spinner-border-sm" role="status"></span>').prop('disabled', true);
-
-            $.ajax({
-                url: `/cart/add/${productId}/`,
-                method: 'POST',
-                data: {
-                    'quantity': 1,
-                    'csrfmiddlewaretoken': form.find('input[name="csrfmiddlewaretoken"]').val()
-                },
-                success: function (response) {
-                    $('#cart-count').text(response.cart_count);
-
-                    if (response.already_in_cart) {
-                        showToast('Bu mahsulot allaqachon savatda!', 'info');
-                    } else {
-                        showToast('Mahsulot savatga qo\'shildi!', 'success');
-                        button.html('<i class="fas fa-check me-2"></i>Qo\'shilgan').addClass('added').prop('disabled', true);
-                    }
-
-                    if (response.cart_count > 0) {
-                        $('#checkout-footer').fadeIn(200);
-                    }
-                },
-                error: function () {
-                    showToast('Xatolik yuz berdi. Qayta urinib ko‘ring.', 'danger');
-                    button.html(originalHTML).prop('disabled', false);
-                }
-            });
-        });
-
-        function showToast(message, type = 'success') {
-            const toast = $('#cartToast');
-            toast.removeClass('text-bg-success text-bg-danger text-bg-info').addClass(`text-bg-${type}`);
-            toast.find('.toast-body').text(message);
-            new bootstrap.Toast(toast, { delay: 2000 }).show();
+    $.ajax({
+      url: `/cart/toggle/${id}/`,
+      method: 'POST',
+      data: { csrfmiddlewaretoken: _csrf },
+      success(r) {
+        bumpCartDot(r.cart_count);
+        if (r.action === 'added') {
+          btn.removeClass('loading').addClass('in-cart')
+             .html('<i class="fas fa-check fa-lg"></i> Savatda (olib tashlash)');
+          showToast("Savatga qo'shildi ✓", 'success');
+        } else {
+          btn.removeClass('loading in-cart')
+             .html('<i class="fas fa-cart-plus fa-lg"></i> Savatga qo\'shish');
+          showToast("Savatdan olib tashlandi", 'info');
         }
+      },
+      error() {
+        btn.removeClass('loading');
+        btn.html(inCart
+          ? '<i class="fas fa-check fa-lg"></i> Savatda (olib tashlash)'
+          : '<i class="fas fa-cart-plus fa-lg"></i> Savatga qo\'shish');
+        showToast('Xatolik!', 'danger');
+      }
     });
+  });
+});
 </script>
 {% endblock %}

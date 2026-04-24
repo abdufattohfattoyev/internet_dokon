@@ -1,520 +1,304 @@
 {% extends 'base.html' %}
-
-{% block title %}Home - Online Shop{% endblock %}
+{% block title %}OptimHalolMarket{% endblock %}
 
 {% block extra_css %}
-    <style>
-        /* Product Grid */
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 15px;
-            margin-bottom: 80px;
-        }
+<style>
+.products-section { padding: 20px 16px 120px; max-width: 1400px; margin: 0 auto; }
+@media(min-width:768px) { .products-section { padding: 24px 24px 120px; } }
 
-        .product-card {
-            border: none;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+.section-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; gap: 10px;
+}
+.section-meta h2 { font-size: .95rem; font-weight: 800; color: var(--ink); margin: 0; }
+.meta-count {
+  font-size: .78rem; font-weight: 600; color: var(--ink-4);
+  background: var(--surface-2); border: 1px solid var(--line);
+  padding: 3px 11px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
 
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        }
+/* ── Grid ── */
+.pgrid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+@media(min-width:480px)  { .pgrid { grid-template-columns: repeat(3,1fr); gap: 12px; } }
+@media(min-width:768px)  { .pgrid { grid-template-columns: repeat(4,1fr); gap: 14px; } }
+@media(min-width:1100px) { .pgrid { grid-template-columns: repeat(5,1fr); gap: 16px; } }
 
-        .product-image-container {
-            width: 100%;
-            height: 180px;
-            overflow: hidden;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
+/* ── Card ── */
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(14px) scale(.97); }
+  to   { opacity:1; transform:none; }
+}
+.pc {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line);
+  transition: box-shadow .22s, transform .22s, border-color .22s;
+  animation: cardIn .32s cubic-bezier(.22,1,.36,1) both;
+}
+.pc:hover { box-shadow: var(--sh-md); transform: translateY(-5px); border-color: rgba(22,163,74,.18); }
 
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-        }
+.pc-img {
+  position: relative; padding-top: 100%;
+  background: var(--bg); overflow: hidden;
+}
+.pc-img img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain; padding: 12px;
+  transition: transform .38s ease;
+}
+.pc:hover .pc-img img { transform: scale(1.07); }
+.pc-img a { position: absolute; inset: 0; z-index: 1; }
 
-        .product-card:hover .product-image {
-            transform: scale(1.05);
-        }
+.pc-body { padding: 10px 12px 12px; display: flex; flex-direction: column; flex: 1; gap: 5px; }
+.pc-name {
+  font-size: .82rem; font-weight: 600; color: var(--ink); line-height: 1.42;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; min-height: 2.32em;
+}
+.pc-price { font-size: .9rem; font-weight: 800; color: var(--primary); letter-spacing: -.3px; }
 
-        .product-card .card-body {
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
+/* ── Actions ── */
+.pc-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 6px; }
 
-        .product-card .card-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 2.8em;
-        }
+.btn-eye {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink-4);
+  border: 1px solid var(--line); transition: var(--t);
+  text-decoration: none; font-size: .85rem;
+}
+.btn-eye:hover { color: var(--primary); background: var(--primary-xl); border-color: rgba(22,163,74,.3); }
 
-        .product-card .card-text {
-            font-size: 0.95rem;
-            color: var(--primary-color);
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+/* Toggle cart button */
+.btn-cart {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  font-size: .75rem; font-weight: 700;
+  border: 1.5px solid transparent;
+  background: var(--primary); color: #fff;
+  transition: var(--t); cursor: pointer;
+  font-family: var(--font); white-space: nowrap;
+  position: relative; overflow: hidden;
+}
+.btn-cart:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(22,163,74,.28); }
+.btn-cart:active { transform: scale(.96); }
 
-        .product-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: auto;
-        }
+/* In-cart state */
+.btn-cart.in-cart {
+  background: var(--primary-l);
+  color: var(--primary);
+  border-color: rgba(22,163,74,.35);
+}
+.btn-cart.in-cart:hover {
+  background: #fef2f2;
+  color: var(--red);
+  border-color: rgba(239,68,68,.3);
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+.btn-cart.in-cart:hover .c-txt::before { content: "Olib tashlash"; }
+.btn-cart.in-cart:hover .c-ico::before { content: "\f00d"; }  /* × */
+.btn-cart.in-cart:hover .c-txt-inner { display: none; }
 
-        .detail-btn {
-            font-size: 0.8rem;
-            padding: 6px 8px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            color: #333;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            flex: 1;
-            text-align: center;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 0;
-        }
+/* Loading state */
+.btn-cart.loading { opacity: .65; cursor: not-allowed; }
 
-        .detail-btn i {
-            margin-right: 4px;
-            font-size: 0.8rem;
-        }
+/* Empty state */
+.empty-grid {
+  grid-column: 1/-1; text-align: center; padding: 64px 24px;
+  background: var(--surface); border-radius: var(--r-xl); border: 2px dashed var(--line);
+}
+.empty-grid h5 { font-size: 1rem; font-weight: 800; color: var(--ink); margin-bottom: 7px; }
+.empty-grid p  { font-size: .88rem; color: var(--ink-4); margin-bottom: 20px; line-height: 1.6; }
+.empty-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 22px; border-radius: var(--r);
+  background: var(--primary); color: #fff;
+  font-size: .88rem; font-weight: 700; text-decoration: none; transition: var(--t);
+}
+.empty-btn:hover { background: var(--primary-d); color: #fff; }
 
-        .detail-btn:hover {
-            background-color: #e9ecef;
-            color: #333;
-        }
+/* ── Pagination ── */
+.pg-wrap { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 32px; }
+.pg-wrap .page-link {
+  width: 36px; height: 36px; border-radius: var(--r-sm) !important;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .82rem; font-weight: 600; padding: 0 !important;
+  border: 1px solid var(--line) !important; color: var(--ink-3) !important;
+  background: var(--surface) !important; transition: var(--t) !important;
+}
+.pg-wrap .page-link:hover { background: var(--primary-xl) !important; color: var(--primary) !important; border-color: rgba(22,163,74,.3) !important; }
+.pg-wrap .page-item.active .page-link { background: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important; }
 
-        .cart-btn {
-            font-size: 0.8rem;
-            padding: 6px 8px;
-            background-color: var(--primary-color);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+/* ── Order bar ── */
+.order-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 998;
+  display: none; padding: 10px 16px 12px;
+  background: var(--surface); border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 28px rgba(0,0,0,.09);
+}
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .order-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+.order-bar-inner {
+  max-width: 500px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+}
+.order-bar-info { display: flex; align-items: center; gap: 11px; }
+.order-bar-icon {
+  width: 40px; height: 40px; border-radius: var(--r);
+  background: var(--primary-l);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primary); font-size: 16px; flex-shrink: 0;
+}
+.order-bar-lbl   { font-size: .75rem; color: var(--ink-4); font-weight: 500; }
+.order-bar-count { font-size: .95rem; font-weight: 800; color: var(--ink); margin-top: 1px; }
+.order-bar-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border-radius: var(--r);
+  font-weight: 700; font-size: .88rem; border: none;
+  background: var(--primary); color: #fff;
+  text-decoration: none; transition: var(--t); flex-shrink: 0;
+  font-family: var(--font);
+}
+.order-bar-btn:hover { background: var(--primary-d); color: #fff; transform: translateY(-1px); }
 
-        .cart-btn.added {
-            background-color: #28a745;
-            cursor: default;
-        }
-
-        .cart-btn.added:hover {
-            background-color: #28a745;
-        }
-
-        .cart-btn i {
-            margin-right: 4px;
-            font-size: 0.8rem;
-        }
-
-        .cart-btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        /* Category Tabs */
-        .category-tabs-container {
-            position: sticky;
-            top: 60px;
-            z-index: 900;
-            background: #fff;
-            padding: 10px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .category-tabs {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            padding: 0 15px;
-            gap: 8px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-
-        .category-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .category-tabs .nav-link {
-            color: #555;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            background-color: #f5f5f5;
-            border: 1px solid #eee;
-            transition: all 0.2s ease;
-        }
-
-        .category-tabs .nav-link:hover {
-            background-color: #e9ecef;
-            color: #333;
-        }
-
-        .category-tabs .nav-link.active {
-            background-color: var(--primary-color);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
-            border-color: var(--primary-color);
-        }
-
-        /* Search Container */
-        .search-container {
-            margin: 15px;
-            background: #fff;
-            padding: 8px 15px;
-            border-radius: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .cart-icon {
-            position: relative;
-            font-size: 1.4rem;
-            color: var(--primary-color);
-        }
-
-        .cart-icon .badge {
-            position: absolute;
-            top: -5px;
-            right: -8px;
-            background-color: #fff;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        /* Sticky Checkout Footer */
-        .checkout-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #fff;
-            border-top: 1px solid #e9ecef;
-            padding: 12px 15px;
-            text-align: center;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .checkout-btn {
-            font-size: 1rem;
-            padding: 10px 20px;
-            background-color: var(--success-color);
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            width: 100%;
-            max-width: 400px;
-            transition: all 0.2s ease;
-        }
-
-        .checkout-btn:hover {
-            background-color: #218838;
-        }
-
-        /* Pagination */
-        .pagination .page-item .page-link {
-            color: var(--primary-color);
-            border: 1px solid #dee2e6;
-            margin: 0 3px;
-            border-radius: 8px !important;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        /* Empty State */
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            color: #adb5bd;
-            margin-bottom: 15px;
-        }
-
-        /* Responsive Adjustments */
-        @media (min-width: 768px) {
-            .product-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 20px;
-                padding: 20px;
-            }
-
-            .product-image-container {
-                height: 200px;
-            }
-
-            .product-actions {
-                gap: 8px;
-            }
-
-            .detail-btn, .cart-btn {
-                font-size: 0.85rem;
-                padding: 7px 10px;
-            }
-        }
-
-        @media (min-width: 992px) {
-            .product-grid {
-                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            }
-
-            .product-image-container {
-                height: 220px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .detail-btn, .cart-btn {
-                font-size: 0.75rem;
-                padding: 5px 6px;
-            }
-
-            .detail-btn i, .cart-btn i {
-                margin-right: 3px;
-                font-size: 0.7rem;
-            }
-        }
-    </style>
+/* Card animation stagger */
+.pgrid .pc:nth-child(1)  { animation-delay:.03s }
+.pgrid .pc:nth-child(2)  { animation-delay:.06s }
+.pgrid .pc:nth-child(3)  { animation-delay:.09s }
+.pgrid .pc:nth-child(4)  { animation-delay:.12s }
+.pgrid .pc:nth-child(5)  { animation-delay:.15s }
+.pgrid .pc:nth-child(6)  { animation-delay:.18s }
+.pgrid .pc:nth-child(n+7){ animation-delay:.21s }
+</style>
 {% endblock %}
 
 {% block content %}
-    <!-- Search Bar and Cart Icon -->
-    <div class="search-container shadow-sm">
-        <div class="cart-icon">
-            <a href="{% url 'cart_detail' %}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Savatni ko'rish">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="badge" id="cart-count">{{ cart.cartitem_set.count }}</span>
-            </a>
+<div class="products-section">
+  <div class="section-meta">
+    <h2>
+      {% if request.GET.q %}"<span style="color:var(--primary)">{{ request.GET.q }}</span>" natijalari
+      {% else %}Barcha mahsulotlar{% endif %}
+    </h2>
+    <span class="meta-count">{{ products.paginator.count }} ta</span>
+  </div>
+
+  <div class="pgrid">
+    {% for product in products %}
+    <div class="pc">
+      <div class="pc-img">
+        {% with img=product.get_primary_image %}
+          {% if img and img.image %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy">
+          {% else %}<img src="/static/images/no-image.png" alt="Rasm yo'q">{% endif %}
+        {% endwith %}
+        <a href="{% url 'product_detail' product.slug %}"></a>
+      </div>
+      <div class="pc-body">
+        <div class="pc-name">{{ product.name }}</div>
+        <div class="pc-price product-price">{{ product.price }} so'm</div>
+        <div class="pc-actions">
+          <a href="{% url 'product_detail' product.slug %}" class="btn-eye" title="Ko'rish">
+            <i class="fas fa-eye"></i>
+          </a>
+          <button class="btn-cart toggle-cart {% if product in cart_products %}in-cart{% endif %}"
+                  data-product-id="{{ product.id }}">
+            {% if product in cart_products %}
+              <i class="fas fa-check"></i><span>Qo'shildi</span>
+            {% else %}
+              <i class="fas fa-plus"></i><span>Qo'shish</span>
+            {% endif %}
+          </button>
         </div>
-        <form method="GET" action="{% url 'home' %}" class="w-100">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control border-0" placeholder="Mahsulot qidirish..." value="{{ request.GET.q }}" aria-label="Search">
-                <button class="btn btn-primary rounded-pill px-3" type="submit"><i class="fas fa-search"></i></button>
-            </div>
-        </form>
+      </div>
     </div>
-
-    <!-- Category Tabs -->
-    <div class="category-tabs-container">
-        <ul class="nav category-tabs">
-            <li class="nav-item">
-                <a class="nav-link {% if not request.GET.category %}active{% endif %}" href="{% url 'home' %}">Barchasi</a>
-            </li>
-            {% for category in categories %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.GET.category == category.slug %}active{% endif %}" href="{% url 'category_detail' category.slug %}">{{ category.name }}</a>
-                </li>
-            {% endfor %}
-        </ul>
+    {% empty %}
+    <div class="empty-grid">
+      <h5>Mahsulot topilmadi</h5>
+      <p>Boshqa kalit so'z kiriting yoki barcha bo'limlarni ko'ring</p>
+      <a href="{% url 'home' %}" class="empty-btn"><i class="fas fa-home"></i> Bosh sahifaga</a>
     </div>
+    {% endfor %}
+  </div>
 
-    <!-- Product Grid -->
-    <div class="product-grid">
-        {% for product in products %}
-            <div class="product-card card">
-                <div class="product-image-container">
-                    {% with primary_image=product.get_primary_image %}
-                        {% if primary_image and primary_image.image and primary_image.image.url %}
-                            <a href="{% url 'product_detail' product.slug %}">
-                                <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" class="product-image">
-                            </a>
-                        {% else %}
-                            <img src="/static/images/no-image.png" alt="Rasm mavjud emas" class="product-image">
-                        {% endif %}
-                    {% endwith %}
-                </div>
-                <div class="card-body">
-                    <h6 class="card-title">{{ product.name }}</h6>
-                    <p class="card-text product-price">{{ product.price }} so'm</p>
-                    <div class="product-actions">
-                        <a href="{% url 'product_detail' product.slug %}" class="detail-btn">
-                            <i class="fas fa-eye"></i> Batafsil
-                        </a>
-                        <form class="add-to-cart-form" data-product-id="{{ product.id }}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn cart-btn add-to-cart {% if product in cart_products %}added{% endif %}" {% if product in cart_products %}disabled{% endif %}>
-                                <i class="fas {% if product in cart_products %}fa-check{% else %}fa-cart-plus{% endif %}"></i>
-                                {% if product in cart_products %}Qo'shilgan{% else %}Savatga{% endif %}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state">
-                <i class="fas fa-box-open"></i>
-                <h5 class="text-muted">Mahsulotlar topilmadi</h5>
-                <a href="{% url 'home' %}" class="btn btn-outline-primary mt-3">
-                    <i class="fas fa-arrow-left me-1"></i> Bosh sahifaga qaytish
-                </a>
-            </div>
-        {% endfor %}
-    </div>
-
-    <!-- Pagination -->
-    {% if products.paginator.num_pages > 1 %}
-        <nav aria-label="Page navigation" class="my-4">
-            <ul class="pagination justify-content-center">
-                {% if products.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Oldingi">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                    </li>
-                {% endif %}
-                {% for num in products.paginator.page_range %}
-                    {% if products.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-                {% if products.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" aria-label="Keyingi">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
+  {% if products.paginator.num_pages > 1 %}
+  <nav class="mt-4"><ul class="pagination pg-wrap">
+    {% if products.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="fas fa-chevron-left" style="font-size:.7rem"></i></a></li>
     {% endif %}
+    {% for num in products.paginator.page_range %}
+      {% if products.number == num %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+      <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if products.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"><i class="fas fa-chevron-right" style="font-size:.7rem"></i></a></li>
+    {% endif %}
+  </ul></nav>
+  {% endif %}
+</div>
 
-    <!-- Sticky Checkout Footer -->
-    <div class="checkout-footer" id="checkout-footer">
-        <a href="{% url 'cart_detail' %}" class="btn checkout-btn">
-            <i class="fas fa-shopping-bag me-2"></i> Buyurtma berish
-        </a>
+<!-- ORDER BAR -->
+<div class="order-bar" id="orderBar">
+  <div class="order-bar-inner">
+    <div class="order-bar-info">
+      <div class="order-bar-icon"><i class="fas fa-shopping-bag"></i></div>
+      <div>
+        <div class="order-bar-lbl">Savatda</div>
+        <div class="order-bar-count"><span class="js-cart-count">{{ cart_count }}</span> ta mahsulot</div>
+      </div>
     </div>
+    <a href="{% url 'cart_detail' %}" class="order-bar-btn">
+      <i class="fas fa-arrow-right"></i> Buyurtma
+    </a>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-    <script>
-        $(document).ready(function() {
-            // Initialize tooltips
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+<script>
+$(function () {
+  if ({{ cart_count }} > 0) $('#orderBar').show();
 
-            // Add to cart functionality
-            $('.add-to-cart-form').on('submit', function(e) {
-                e.preventDefault();
-                const form = $(this);
-                const productId = form.data('product-id');
-                const button = form.find('.add-to-cart');
-                const originalButtonText = button.html();
+  $(document).on('click', '.toggle-cart', function () {
+    const btn = $(this), id = btn.data('product-id');
+    if (btn.hasClass('loading')) return;
+    const inCart = btn.hasClass('in-cart');
+    btn.addClass('loading').html('<i class="fas fa-spinner fa-spin"></i>');
 
-                // Add loading state
-                button.html('<span class="spinner-border spinner-border-sm spinner-btn" role="status"></span>').prop('disabled', true);
-
-                $.ajax({
-                    url: `/cart/add/${productId}/`,
-                    method: 'POST',
-                    data: {
-                        'quantity': 1,
-                        'csrfmiddlewaretoken': '{{ csrf_token }}'
-                    },
-                    success: function(response) {
-                        // Update cart count
-                        $('#cart-count').text(response.cart_count);
-
-                        // Show appropriate toast
-                        if (response.already_in_cart) {
-                            showToast('Bu mahsulot allaqachon savatda!', 'info');
-                        } else {
-                            showToast('Mahsulot savatga qo\'shildi!', 'success');
-                            // Update button state
-                            button.html('<i class="fas fa-check"></i> Qo\'shilgan')
-                                  .addClass('added')
-                                  .prop('disabled', true);
-                        }
-
-                        // Restore button state (only for loading spinner)
-                        button.prop('disabled', response.already_in_cart ? false : true);
-
-                        // Show checkout footer if cart has items
-                        if (response.cart_count > 0) {
-                            $('#checkout-footer').fadeIn(200);
-                        }
-                    },
-                    error: function(xhr) {
-                        showToast('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.', 'danger');
-                        button.html(originalButtonText).prop('disabled', false);
-                    }
-                });
-            });
-
-            // Toast notification function
-            function showToast(message, type = 'success') {
-                const toast = $('#cartToast');
-                toast.removeClass('text-bg-success text-bg-danger text-bg-info').addClass(`text-bg-${type}`);
-                toast.find('.toast-body').text(message);
-                const bsToast = new bootstrap.Toast(toast, {
-                    delay: 2000,
-                    animation: true
-                });
-                bsToast.show();
-            }
-
-            // Show checkout footer if cart has items on page load
-            if (parseInt($('#cart-count').text()) > 0) {
-                $('#checkout-footer').show();
-            }
-        });
-    </script>
+    $.ajax({
+      url: `/cart/toggle/${id}/`,
+      method: 'POST',
+      data: { csrfmiddlewaretoken: _csrf },
+      success(r) {
+        bumpCartDot(r.cart_count);
+        if (r.action === 'added') {
+          btn.removeClass('loading').addClass('in-cart')
+             .html('<i class="fas fa-check"></i><span>Qo\'shildi</span>');
+          showToast("Savatga qo'shildi ✓", 'success');
+        } else {
+          btn.removeClass('loading in-cart')
+             .html('<i class="fas fa-plus"></i><span>Qo\'shish</span>');
+          showToast("Savatdan olib tashlandi", 'info');
+        }
+      },
+      error() {
+        btn.removeClass('loading');
+        btn.html(inCart
+          ? '<i class="fas fa-check"></i><span>Qo\'shildi</span>'
+          : '<i class="fas fa-plus"></i><span>Qo\'shish</span>');
+        showToast('Xatolik yuz berdi', 'danger');
+      }
+    });
+  });
+});
+</script>
 {% endblock %}

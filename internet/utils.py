@@ -19,4 +19,6 @@ def send_telegram_message(message):
         return response.json()
     except requests.RequestException as e:
         print(f"Failed to send Telegram message: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Telegram response body: {e.response.text}")
         return None

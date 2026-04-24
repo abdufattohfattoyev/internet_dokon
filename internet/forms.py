@@ -23,7 +23,10 @@ class OrderForm(forms.ModelForm):
             ('samarqand', 'Samarqand'),
             ('navoiy', 'Navoiy'),
         ]
-        # self.fields['region'].initial = 'samarqand'  <-- Buni olib tashlash kerak
+        self.fields['region'].required  = True
+        self.fields['city'].required    = True
+        self.fields['address'].required = True
+        self.fields['notes'].required   = False
         self.fields['admin_notes'].required = False
         self.fields['admin_notes'].widget = forms.HiddenInput()
 

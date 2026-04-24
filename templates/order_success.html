@@ -1,187 +1,144 @@
 {% extends 'base.html' %}
-
-{% block title %}Buyurtma muvaffaqiyatli - Optimhalolmarket.uz{% endblock %}
+{% block title %}Buyurtma qabul qilindi — Optim Halol Market{% endblock %}
 
 {% block extra_css %}
 <style>
-    .success-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 30px 20px;
-        text-align: center;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        animation: fadeIn 0.5s ease;
-    }
+.success-page {
+  min-height: 70vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px;
+}
+.success-card {
+  max-width: 480px; width: 100%;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  padding: 36px 28px;
+  box-shadow: var(--sh-lg);
+  text-align: center;
+  animation: scaleIn .4s ease;
+  position: relative; z-index: 1;
+  border: 1px solid var(--line);
+}
+@media(min-width:480px) { .success-card { padding: 40px 36px; } }
 
-    .success-icon {
-        font-size: 4rem;
-        color: var(--success-color);
-        margin-bottom: 20px;
-        animation: bounceIn 0.8s ease;
-    }
+.success-ring {
+  width: 88px; height: 88px;
+  background: var(--primary);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 2rem; color: #fff;
+  box-shadow: 0 8px 24px rgba(22,163,74,.35);
+  animation: bounceIn .7s ease;
+}
+.success-title { font-size: 1.4rem; font-weight: 900; color: var(--ink); margin-bottom: 8px; }
+.success-sub {
+  font-size: .9rem; color: var(--ink-3); line-height: 1.65;
+  margin-bottom: 24px; max-width: 340px; margin-left: auto; margin-right: auto;
+}
 
-    .success-title {
-        font-weight: 700;
-        color: var(--dark-color);
-        margin-bottom: 15px;
-        font-size: 1.8rem;
-    }
+.order-info-box {
+  background: var(--surface-2);
+  border-radius: var(--r-lg); padding: 18px;
+  margin-bottom: 24px; text-align: left;
+  border: 1px solid var(--line);
+}
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--line-soft);
+}
+.info-row:last-child { border: none; padding-bottom: 0; }
+.info-label { font-size: .83rem; color: var(--ink-4); font-weight: 500; }
+.info-val   { font-size: .9rem; font-weight: 700; color: var(--ink-2); }
 
-    .success-message {
-        color: #475569;
-        font-size: 1rem;
-        margin-bottom: 20px;
-        line-height: 1.6;
-    }
+.contacts { display: flex; flex-direction: column; gap: 9px; margin-bottom: 20px; }
+.contact-btn {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 11px 20px; border-radius: var(--r-lg);
+  text-decoration: none; font-weight: 600; font-size: .88rem;
+  transition: var(--t);
+  border: 1.5px solid var(--line); color: var(--ink-3); background: var(--surface);
+}
+.contact-btn:hover { transform: translateY(-1px); box-shadow: var(--sh-sm); }
+.contact-btn.phone { border-color: rgba(22,163,74,.3); color: var(--primary); }
+.contact-btn.phone:hover { background: var(--primary-xl); }
+.contact-btn.tg    { border-color: #2aabee4d; color: #2aabee; }
+.contact-btn.tg:hover  { background: #e8f8ff; }
 
-    .order-info {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 20px;
-        text-align: left;
-    }
+.btn-home {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; padding: 14px;
+  border-radius: var(--r-lg); font-weight: 700; font-size: .95rem;
+  border: none; cursor: pointer;
+  background: var(--primary); color: #fff;
+  text-decoration: none; font-family: var(--font);
+  box-shadow: 0 4px 16px rgba(22,163,74,.3); transition: var(--t);
+}
+.btn-home:hover { background: var(--primary-d); color: #fff; transform: translateY(-1px); }
 
-    .order-info p {
-        margin: 8px 0;
-        color: #475569;
-        font-size: 0.95rem;
-    }
+/* Confetti */
+.confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+.dot { position: absolute; border-radius: 50%; animation: fall linear forwards; }
 
-    .order-info strong {
-        color: var(--dark-color);
-    }
-
-    .contact-links {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
-    }
-
-    .contact-links a {
-        color: var(--primary-color);
-        font-size: 1.1rem;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 15px;
-        border-radius: 8px;
-        transition: background-color 0.2s ease;
-    }
-
-    .contact-links a:hover {
-        background-color: #f1f5f9;
-    }
-
-    .contact-links .phone-link {
-        font-family: monospace;
-        letter-spacing: 0.5px;
-    }
-
-    .action-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
-
-    .action-buttons .btn {
-        padding: 10px 20px;
-        font-size: 0.95rem;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    @keyframes bounceIn {
-        0% { transform: scale(0.3); opacity: 0; }
-        50% { transform: scale(1.2); opacity: 1; }
-        100% { transform: scale(1); }
-    }
-
-    @media (max-width: 576px) {
-        .success-container {
-            padding: 20px 15px;
-            margin: 15px;
-        }
-
-        .success-title {
-            font-size: 1.5rem;
-        }
-
-        .success-icon {
-            font-size: 3rem;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .action-buttons .btn {
-            width: 100%;
-        }
-
-        .contact-links {
-            flex-direction: column;
-            gap: 10px;
-        }
-    }
+@keyframes scaleIn  { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
+@keyframes bounceIn { 0%{transform:scale(.3);opacity:0} 55%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+@keyframes fall     { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="success-container mt-5">
-    <i class="fas fa-check-circle success-icon"></i>
-    <h2 class="success-title">Buyurtma muvaffaqiyatli yuborildi!</h2>
-    <p class="success-message">
-        Rahmat! Buyurtmangiz qabul qilindi. Operatorimiz tez orada siz bilan bog'lanadi.
-        {% if order %}Buyurtma raqami: <strong>#{{ order.id }}</strong>.{% endif %}
-    </p>
+<div class="confetti" id="confetti"></div>
+
+<div class="success-page">
+  <div class="success-card">
+    <div class="success-ring"><i class="fas fa-check"></i></div>
+
+    <h1 class="success-title">Buyurtma qabul qilindi!</h1>
+    <p class="success-sub">Rahmat! Operatorimiz tez orada siz bilan bog'lanadi va buyurtmangizni tasdiqlaydi.</p>
 
     {% if order %}
-        <div class="order-info">
-            <p><strong>Buyurtma raqami:</strong> #{{ order.id }}</p>
-            <p><strong>Umumiy summa:</strong> <span class="total-price" data-price="{{ order.total_price }}">{{ order.total_price }} so'm</span></p>
-            <p><strong>Taxminiy yetkazib berish:</strong> 1-3 ish kuni</p>
-        </div>
+    <div class="order-info-box">
+      <div class="info-row">
+        <span class="info-label">Buyurtma raqami</span>
+        <span class="info-val">#{{ order.id }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Jami summa</span>
+        <span class="info-val" style="color:var(--primary)">{{ order.total_price }} so'm</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Yetkazib berish</span>
+        <span class="info-val">1–3 ish kuni</span>
+      </div>
+    </div>
     {% endif %}
 
-    <div class="contact-links">
-        <a href="tel:+998992010081" class="phone-link">
-            <i class="fas fa-phone"></i> +998 99 201 00 81
-        </a>
-        <a href="https://t.me/optimhalolmarket" target="_blank">
-            <i class="fab fa-telegram"></i> Telegram
-        </a>
+    <div class="contacts">
+      <a href="tel:+998992010081" class="contact-btn phone">
+        <i class="fas fa-phone"></i> +998 99 201 00 81
+      </a>
+      <a href="https://t.me/optimhalolmarket" target="_blank" rel="noopener" class="contact-btn tg">
+        <i class="fab fa-telegram"></i> Telegram orqali bog'lanish
+      </a>
     </div>
 
-    <div class="action-buttons">
-        <a href="{% url 'home' %}" class="btn btn-primary">
-            <i class="fas fa-home me-2"></i> Bosh sahifaga qaytish
-        </a>
-    </div>
+    <a href="{% url 'home' %}" class="btn-home">
+      <i class="fas fa-home"></i> Bosh sahifaga qaytish
+    </a>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-$(document).ready(function() {
-    // Show success toast on page load
-    showToast('Buyurtma muvaffaqiyatli yuborildi!', 'success');
-
-    // Ensure phone link works on mobile
-    $('.phone-link').on('click', function(e) {
-        if (!/Mobi|Android/i.test(navigator.userAgent)) {
-            e.preventDefault();
-            showToast('Mobil qurilmadan telefon qilish uchun raqamni bosing!', 'info');
-        }
-    });
-});
+(function() {
+  const colors = ['#16a34a','#4ade80','#86efac','#f59e0b','#fde68a','#2aabee','#93c5fd'];
+  const c = document.getElementById('confetti');
+  for (let i = 0; i < 56; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.style.cssText = `left:${Math.random()*100}%;top:-10px;background:${colors[i%colors.length]};width:${6+Math.random()*7}px;height:${6+Math.random()*7}px;animation-duration:${1.4+Math.random()*2.2}s;animation-delay:${Math.random()*.9}s`;
+    c.appendChild(d);
+  }
+  setTimeout(() => c.remove(), 4200);
+})();
 </script>
 {% endblock %}

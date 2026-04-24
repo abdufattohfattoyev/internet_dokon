@@ -1,502 +1,296 @@
 {% extends 'base.html' %}
-
-{% block title %}Savat - Optimhalolmarket.uz{% endblock %}
+{% block title %}Savat — Optim Halol Market{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Mobile-first styles */
-    .cart-container {
-        padding: 15px;
-        padding-bottom: 120px;
-    }
+.cart-wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 140px; }
+@media(min-width:768px) { .cart-wrap { padding: 28px 24px 140px; } }
 
-    .cart-item-card {
-        border: 1px solid #eee;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 15px;
-        background: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: transform 0.2s ease;
-    }
+.page-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 12px;
+}
+.page-heading h2 { font-size: 1.3rem; font-weight: 800; color: var(--ink); margin: 0; }
+.cart-badge-count {
+  background: var(--primary-l); color: var(--primary);
+  font-size: .78rem; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+  border: 1px solid rgba(22,163,74,.25);
+}
 
-    .cart-item-card:hover {
-        transform: translateY(-2px);
-    }
+/* Item card */
+.item-card {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  transition: box-shadow .2s, border-color .2s;
+}
+.item-card:hover { box-shadow: var(--sh-sm); border-color: rgba(22,163,74,.15); }
 
-    .product-info {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-    }
+.item-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.item-img {
+  width: 68px; height: 68px; flex-shrink: 0;
+  border-radius: var(--r); overflow: hidden;
+  background: var(--bg); border: 1px solid var(--line);
+}
+.item-img img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+.item-name-link { font-weight: 700; font-size: .93rem; color: var(--ink); line-height: 1.3; flex: 1; text-decoration: none; }
+.item-name-link:hover { color: var(--primary); }
 
-    .product-image-container {
-        width: 70px;
-        height: 70px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-right: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
+.item-divider { border: none; border-top: 1px solid var(--line-soft); margin: 0 0 12px; }
 
-    .product-image {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
+.item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.item-label { font-size: .83rem; color: var(--ink-4); font-weight: 500; }
+.item-val   { font-size: .88rem; font-weight: 700; color: var(--ink-2); }
 
-    .product-name {
-        font-weight: 600;
-        font-size: 1.1rem;
-        flex-grow: 1;
-        color: #333;
-    }
+/* Quantity controls */
+.qty-ctrl { display: flex; align-items: center; gap: 6px; }
+.qty-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--line);
+  background: var(--surface-2);
+  font-size: 1rem; font-weight: 700; color: var(--ink-3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: var(--t); line-height: 1;
+}
+.qty-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.qty-input {
+  width: 44px; height: 32px;
+  text-align: center;
+  border: 1.5px solid var(--line); border-radius: var(--r-sm);
+  font-weight: 700; font-size: .9rem; outline: none;
+  font-family: var(--font); color: var(--ink);
+  transition: border-color .15s;
+}
+.qty-input:focus { border-color: var(--primary); }
 
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
+.item-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.item-total-val { font-size: 1rem; font-weight: 800; color: var(--primary); }
+.btn-remove {
+  background: none; border: none; padding: 5px 8px;
+  border-radius: var(--r-sm); color: var(--ink-4);
+  font-size: .8rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: var(--t);
+}
+.btn-remove:hover { background: #fef2f2; color: var(--red); }
 
-    .price-label {
-        color: #666;
-        font-size: 0.95rem;
-    }
+/* Fixed footer */
+.cart-footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 12px 16px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.08); z-index: 999;
+}
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .cart-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+.cart-footer-inner { max-width: 720px; margin: 0 auto; }
+.total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.total-label { font-size: .9rem; color: var(--ink-3); font-weight: 600; }
+.total-price { font-size: 1.25rem; font-weight: 900; color: var(--primary); }
+.btn-order {
+  width: 100%; padding: 13px;
+  border-radius: var(--r-lg); font-weight: 700; font-size: .95rem;
+  border: none; cursor: pointer;
+  background: var(--primary); color: #fff;
+  text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  box-shadow: 0 3px 12px rgba(22,163,74,.3); transition: var(--t);
+  margin-bottom: 7px; font-family: var(--font);
+}
+.btn-order:hover { background: var(--primary-d); color: #fff; transform: translateY(-1px); }
+.btn-continue {
+  width: 100%; padding: 10px;
+  border-radius: var(--r-lg); font-weight: 600; font-size: .86rem;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-3);
+  text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: var(--t); font-family: var(--font);
+}
+.btn-continue:hover { border-color: rgba(22,163,74,.3); color: var(--primary); background: var(--primary-xl); }
 
-    .price-value {
-        font-weight: 600;
-        color: #333;
-    }
+/* Empty */
+.empty-cart-wrap { text-align: center; padding: 60px 20px; }
+.empty-cart-icon {
+  width: 90px; height: 90px;
+  background: var(--primary-l);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 2rem; color: var(--primary);
+}
+.empty-cart-wrap h4 { font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+.empty-cart-wrap p  { color: var(--ink-4); font-size: .92rem; }
 
-    .quantity-control {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 15px 0;
-    }
-
-    .quantity-buttons {
-        display: flex;
-        align-items: center;
-    }
-
-    .quantity-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        background-color: #f8f9fa;
-        border: 1px solid #ddd;
-        transition: background-color 0.2s ease;
-    }
-
-    .quantity-btn:hover {
-        background-color: #e9ecef;
-    }
-
-    .quantity-input {
-        width: 60px;
-        text-align: center;
-        margin: 0 10px;
-        font-weight: 600;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-    }
-
-    .remove-btn {
-        color: #dc3545;
-        background: none;
-        border: none;
-        padding: 8px 0;
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        transition: color 0.2s ease;
-    }
-
-    .remove-btn:hover {
-        color: #b02a37;
-    }
-
-    .cart-actions {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        padding: 15px;
-        box-shadow: 0 -2px 15px rgba(0,0,0,0.1);
-        z-index: 1000;
-        border-top: 1px solid #eee;
-    }
-
-    .total-price {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--primary-color);
-    }
-
-    /* Toast notification */
-    .update-toast {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: white;
-        padding: 10px 25px;
-        border-radius: 30px;
-        box-shadow: 0 3px 15px rgba(0,0,0,0.2);
-        z-index: 1100;
-        display: none;
-        font-weight: 500;
-        animation: fadeInOut 3s ease-in-out;
-    }
-
-    @keyframes fadeInOut {
-        0% { opacity: 0; top: 10px; }
-        10% { opacity: 1; top: 20px; }
-        90% { opacity: 1; top: 20px; }
-        100% { opacity: 0; top: 10px; }
-    }
-
-    /* Loading state */
-    .updating {
-        position: relative;
-        opacity: 0.7;
-        pointer-events: none;
-    }
-
-    .updating:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 24px;
-        height: 24px;
-        border: 3px solid var(--primary-color);
-        border-top: 3px solid transparent;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        transform: translate(-50%, -50%);
-    }
-
-    @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    /* Empty cart */
-    .empty-cart {
-        text-align: center;
-        padding: 40px 20px;
-    }
-
-    .empty-cart i {
-        font-size: 4rem;
-        color: #ddd;
-        margin-bottom: 20px;
-    }
-
-    /* Modal styles */
-    .modal-content {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-
-    .modal-header {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .modal-title {
-        font-weight: 600;
-        color: #333;
-    }
-
-    .modal-body {
-        font-size: 1rem;
-        color: #555;
-    }
-
-    .modal-footer {
-        border-top: none;
-        padding-top: 0;
-    }
-
-    /* Desktop styles */
-    @media (min-width: 768px) {
-        .cart-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding-bottom: 30px;
-        }
-
-        .cart-actions {
-            position: static;
-            background: transparent;
-            padding: 20px 0;
-            box-shadow: none;
-            border-top: none;
-            margin-top: 30px;
-        }
-
-        .cart-item-card {
-            padding: 20px;
-        }
-    }
+/* Modal */
+.modal-content { border-radius: var(--r-xl) !important; border: none !important; box-shadow: var(--sh-lg) !important; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cart-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Savat</h3>
-        <span class="badge bg-primary rounded-pill px-3 py-2" id="cart-count">{{ cart.cartitem_set.count }} ta</span>
+<div class="cart-wrap">
+  <div class="page-heading">
+    <h2><i class="fas fa-shopping-bag me-2" style="color:var(--primary)"></i>Savat</h2>
+    <span class="cart-badge-count" id="cart-page-count">{{ cart.cartitem_set.count }} ta</span>
+  </div>
+
+  {% if cart.cartitem_set.all %}
+  <div id="cart-items">
+    {% for item in cart.cartitem_set.all %}
+    <div class="item-card" data-item-id="{{ item.id }}">
+      <div class="item-top">
+        <div class="item-img">
+          {% with img=item.product.get_primary_image %}
+            {% if img %}<img src="{{ img.image.url }}" alt="{{ item.product.name }}">
+            {% else %}<img src="/static/images/no-image.png" alt="">{% endif %}
+          {% endwith %}
+        </div>
+        <a href="{% url 'product_detail' item.product.slug %}" class="item-name-link">{{ item.product.name }}</a>
+      </div>
+      <hr class="item-divider">
+      <div class="item-row">
+        <span class="item-label">Narxi:</span>
+        <span class="item-val unit-price">{{ item.product.price|floatformat:"0" }} so'm</span>
+      </div>
+      <div class="item-row">
+        <span class="item-label">Soni:</span>
+        <div class="qty-ctrl">
+          <button class="qty-btn qty-dec" data-item-id="{{ item.id }}">−</button>
+          <input type="number" class="qty-input" value="{{ item.quantity }}" min="1" data-item-id="{{ item.id }}">
+          <button class="qty-btn qty-inc" data-item-id="{{ item.id }}">+</button>
+        </div>
+      </div>
+      <div class="item-total-row">
+        <button class="btn-remove" data-item-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#removeModal">
+          <i class="fas fa-trash-alt"></i> O'chirish
+        </button>
+        <span class="item-total-val item-total">{{ item.get_total_price|floatformat:"0" }} so'm</span>
+      </div>
     </div>
+    {% endfor %}
+  </div>
 
-    <!-- Toast notification -->
-    <div class="update-toast" id="update-toast"></div>
-
-    {% if cart.cartitem_set.all %}
-        <div id="cart-items">
-            {% for item in cart.cartitem_set.all %}
-            <div class="cart-item-card" data-item-id="{{ item.id }}">
-                <div class="product-info">
-                    <div class="product-image-container">
-                        {% with primary_image=item.product.get_primary_image %}
-                            {% if primary_image %}
-                                <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="product-image">
-                            {% else %}
-                                <img src="/static/images/no-image.png" alt="Rasm mavjud emas" class="product-image">
-                            {% endif %}
-                        {% endwith %}
-                    </div>
-                    <span class="product-name">{{ item.product.name }}</span>
-                </div>
-
-                <div class="price-row">
-                    <span class="price-label">Narxi:</span>
-                    <span class="price-value unit-price">{{ item.product.price|floatformat:"0" }} so'm</span>
-                </div>
-
-                <div class="quantity-control">
-                    <span class="price-label">Soni:</span>
-                    <div class="quantity-buttons">
-                        <button class="quantity-btn quantity-decrease" data-item-id="{{ item.id }}">-</button>
-                        <input type="number" class="form-control quantity-input" value="{{ item.quantity }}" min="1" data-item-id="{{ item.id }}">
-                        <button class="quantity-btn quantity-increase" data-item-id="{{ item.id }}">+</button>
-                    </div>
-                </div>
-
-                <div class="price-row">
-                    <span class="price-label">Jami:</span>
-                    <span class="price-value item-total">{{ item.get_total_price|floatformat:"0" }} so'm</span>
-                </div>
-
-                <div class="text-end mt-2">
-                    <button class="remove-btn" data-item-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#removeConfirmModal">
-                        <i class="fas fa-trash-alt"></i> O'chirish
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="cart-actions">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="mb-0">Umumiy summa:</h4>
-                <h3 class="mb-0 total-price" id="cart-total">{{ cart.get_total_price|floatformat:"0" }} so'm</h3>
-            </div>
-
-            <div class="d-grid gap-3">
-                <a href="{% url 'checkout' %}" class="btn btn-success btn-lg py-3">
-                    <i class="fas fa-credit-card me-2"></i> Buyurtma berish
-                </a>
-                <a href="{% url 'home' %}" class="btn btn-outline-primary py-2">
-                    <i class="fas fa-arrow-left me-2"></i> Xaridni davom ettirish
-                </a>
-            </div>
-        </div>
-    {% else %}
-        <div class="empty-cart">
-            <i class="fas fa-shopping-cart"></i>
-            <h4 class="mb-3">Savat bo'sh</h4>
-            <p class="text-muted mb-4">Siz hali hech qanday mahsulot qo'shmagansiz</p>
-            <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-4">
-                <i class="fas fa-store me-2"></i> Mahsulotlar sahifasiga o'tish
-            </a>
-        </div>
-    {% endif %}
-
-    <!-- Remove Confirmation Modal -->
-    <div class="modal fade" id="removeConfirmModal" tabindex="-1" aria-labelledby="removeConfirmModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="removeConfirmModalLabel">Mahsulotni o'chirish</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Ushbu mahsulotni savatdan o'chirishni xohlaysizmi?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Yo'q</button>
-                    <button type="button" class="btn btn-danger" id="confirmRemoveBtn">Ha, o'chirish</button>
-                </div>
-            </div>
-        </div>
+  <div class="cart-footer">
+    <div class="cart-footer-inner">
+      <div class="total-row">
+        <span class="total-label">Jami to'lov:</span>
+        <span class="total-price" id="cart-total">{{ cart.get_total_price|floatformat:"0" }} so'm</span>
+      </div>
+      <a href="{% url 'checkout' %}" class="btn-order">
+        <i class="fas fa-paper-plane"></i> Buyurtma berish
+      </a>
+      <a href="{% url 'home' %}" class="btn-continue">
+        <i class="fas fa-arrow-left"></i> Xaridni davom ettirish
+      </a>
     </div>
+  </div>
+
+  <!-- Remove confirmation modal -->
+  <div class="modal fade" id="removeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:340px;padding:0 16px">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4">
+          <div style="width:56px;height:56px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:1.4rem;color:var(--red)">
+            <i class="fas fa-trash-alt"></i>
+          </div>
+          <h5 style="font-weight:800;color:var(--ink);margin-bottom:6px">O'chirishni tasdiqlang</h5>
+          <p style="color:var(--ink-4);font-size:.88rem;margin-bottom:20px">Bu mahsulotni savatdan o'chirmoqchimisiz?</p>
+          <div class="d-flex gap-3">
+            <button class="btn flex-fill" style="border:1.5px solid var(--line);border-radius:var(--r);font-weight:600;color:var(--ink-3)" data-bs-dismiss="modal">Bekor</button>
+            <button class="btn flex-fill" style="background:var(--red);border:none;border-radius:var(--r);font-weight:700;color:#fff" id="confirmRemoveBtn">O'chirish</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="empty-cart-wrap">
+    <div class="empty-cart-icon"><i class="fas fa-shopping-bag"></i></div>
+    <h4>Savat bo'sh</h4>
+    <p>Hali hech narsa qo'shilmagan</p>
+    <a href="{% url 'home' %}" class="btn mt-3 px-5 py-3" style="background:var(--primary);color:#fff;border-radius:var(--r-lg);font-weight:700">
+      <i class="fas fa-store me-2"></i> Xarid qilish
+    </a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-$(document).ready(function() {
-    let currentItemId = null;
+$(function() {
+  let removeId = null;
 
-    // Format price with commas
-    function formatPrice(price) {
-        return new Intl.NumberFormat('uz-UZ').format(Math.round(parseFloat(price))) + " so'm";
-    }
+  function fmt(n) {
+    return new Intl.NumberFormat('uz-UZ').format(Math.round(parseFloat(n))) + " so'm";
+  }
 
-    // Show toast notification
-    function showToast(message, type = 'success') {
-        const toast = $('#update-toast');
-        toast.removeClass('bg-success bg-danger bg-info').addClass(`bg-${type}`);
-        toast.text(message).fadeIn(300);
-        setTimeout(() => toast.fadeOut(300), 3000);
-    }
-
-    // Update cart item
-    function updateCartItem(input) {
-        const itemId = input.data('item-id');
-        const quantity = parseInt(input.val());
-        const itemCard = input.closest('.cart-item-card');
-
-        // Validate input
-        if (isNaN(quantity) || quantity < 1) {
-            input.val(input.data('old-value'));
-            showToast('Soni kamida 1 bo\'lishi kerak', 'danger');
-            return;
+  function updateItem(itemId, qty) {
+    const card = $(`.item-card[data-item-id="${itemId}"]`);
+    card.css('opacity', .55);
+    $.ajax({
+      url: `/cart/update/${itemId}/`,
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+      data: { quantity: qty },
+      success(r) {
+        if (r.success) {
+          card.find('.item-total').text(fmt(r.item_total));
+          $('#cart-total').text(fmt(r.cart_total));
+          $('#cart-page-count').text(r.cart_count + ' ta');
+          bumpCartDot(r.cart_count);
         }
-
-        // Show loading state
-        input.prop('disabled', true);
-        itemCard.addClass('updating');
-
-        $.ajax({
-            url: `/cart/update/${itemId}/`,
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            data: { quantity: quantity },
-            success: function(response) {
-                if (response.success) {
-                    // Update UI
-                    itemCard.find('.item-total').text(formatPrice(response.item_total));
-                    $('#cart-total').text(formatPrice(response.cart_total));
-                    $('#cart-count').text(response.cart_count + ' ta');
-                    input.data('old-value', quantity);
-                    showToast('Savat yangilandi!', 'success');
-                } else {
-                    throw new Error(response.message || 'Invalid response');
-                }
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Xatolik yuz berdi';
-                showToast(errorMsg, 'danger');
-                input.val(input.data('old-value'));
-            },
-            complete: function() {
-                input.prop('disabled', false);
-                itemCard.removeClass('updating');
-            }
-        });
-    }
-
-    // Remove cart item
-    function removeCartItem(itemId) {
-        const itemCard = $(`.cart-item-card[data-item-id="${itemId}"]`);
-        itemCard.addClass('updating');
-
-        $.ajax({
-            url: `/cart/remove/${itemId}/`,
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            success: function(response) {
-                if (response.success) {
-                    itemCard.fadeOut(300, function() {
-                        $(this).remove();
-                        $('#cart-total').text(formatPrice(response.cart_total));
-                        $('#cart-count').text(response.cart_count + ' ta');
-                        showToast('Mahsulot o\'chirildi', 'success');
-                        if (response.cart_count === 0) {
-                            window.location.reload();
-                        }
-                    });
-                } else {
-                    throw new Error(response.message || 'Invalid response');
-                }
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON?.message || 'Xatolik yuz berdi';
-                showToast(errorMsg, 'danger');
-                itemCard.removeClass('updating');
-            }
-        });
-    }
-
-    // Event handlers
-    $('.quantity-increase').click(function() {
-        const input = $(this).siblings('.quantity-input');
-        input.val(parseInt(input.val()) + 1);
-        updateCartItem(input);
+      },
+      complete() { card.css('opacity', 1); }
     });
+  }
 
-    $('.quantity-decrease').click(function() {
-        const input = $(this).siblings('.quantity-input');
-        if (parseInt(input.val()) > 1) {
-            input.val(parseInt(input.val()) - 1);
-            updateCartItem(input);
+  $(document).on('click', '.qty-inc', function() {
+    const inp = $(this).siblings('.qty-input'), val = parseInt(inp.val()) + 1;
+    inp.val(val); updateItem($(this).data('item-id'), val);
+  });
+  $(document).on('click', '.qty-dec', function() {
+    const inp = $(this).siblings('.qty-input'), val = Math.max(1, parseInt(inp.val()) - 1);
+    inp.val(val); updateItem($(this).data('item-id'), val);
+  });
+  $(document).on('change', '.qty-input', function() {
+    const val = Math.max(1, parseInt($(this).val()) || 1);
+    $(this).val(val); updateItem($(this).data('item-id'), val);
+  });
+
+  $(document).on('click', '.btn-remove', function() { removeId = $(this).data('item-id'); });
+
+  $('#confirmRemoveBtn').on('click', function() {
+    if (!removeId) return;
+    const card = $(`.item-card[data-item-id="${removeId}"]`);
+    $('#removeModal').modal('hide');
+    $.ajax({
+      url: `/cart/remove/${removeId}/`,
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+      success(r) {
+        if (r.success) {
+          card.fadeOut(260, function() {
+            $(this).remove();
+            $('#cart-total').text(fmt(r.cart_total));
+            $('#cart-page-count').text(r.cart_count + ' ta');
+            bumpCartDot(r.cart_count);
+            if (r.cart_count === 0) setTimeout(() => location.reload(), 400);
+          });
         }
+      }
     });
+    removeId = null;
+  });
 
-    $('.quantity-input').on('change', function() {
-        updateCartItem($(this));
-    }).each(function() {
-        $(this).data('old-value', $(this).val());
-    });
-
-    $('.remove-btn').click(function() {
-        currentItemId = $(this).data('item-id');
-    });
-
-    $('#confirmRemoveBtn').click(function() {
-        if (currentItemId) {
-            removeCartItem(currentItemId);
-            $('#removeConfirmModal').modal('hide');
-            currentItemId = null;
-        }
-    });
-
-    // Format initial prices
-    $('.unit-price, .item-total, #cart-total').each(function() {
-        const price = parseFloat($(this).text().replace(/\s+/g, '').replace('so\'m', ''));
-        if (!isNaN(price)) {
-            $(this).text(formatPrice(price));
-        }
-    });
+  $('.unit-price, .item-total, #cart-total').each(function() {
+    const p = parseFloat($(this).text().replace(/[\s ]+/g,'').replace("so'm",''));
+    if (!isNaN(p)) $(this).text(fmt(p));
+  });
 });
 </script>
 {% endblock %}
