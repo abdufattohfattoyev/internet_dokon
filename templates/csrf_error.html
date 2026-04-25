@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Sahifani yangilang — OptimHalolMarket{% endblock %}
+
+{% block content %}
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:24px 16px">
+  <div style="max-width:420px;width:100%;text-align:center">
+    <div style="width:80px;height:80px;background:#fffbeb;border-radius:50%;
+                display:flex;align-items:center;justify-content:center;
+                margin:0 auto 20px;font-size:2rem;color:#f59e0b">
+      <i class="fas fa-sync-alt"></i>
+    </div>
+    <h2 style="font-size:1.3rem;font-weight:800;color:var(--ink);margin-bottom:10px">
+      Sahifani yangilash kerak
+    </h2>
+    <p style="color:var(--ink-4);font-size:.92rem;line-height:1.6;margin-bottom:28px">
+      Xavfsizlik tekshiruvi o'tkazildi. Bu odatda sahifa uzoq vaqt ochiq qolganda yuz beradi.
+      Qayta urinib ko'ring — hamma narsa ishlaydi.
+    </p>
+    <a href="javascript:history.back()"
+       style="display:inline-flex;align-items:center;gap:8px;
+              background:var(--primary);color:#fff;
+              padding:12px 32px;border-radius:var(--r-lg);
+              font-weight:700;font-size:.95rem;text-decoration:none;
+              box-shadow:0 4px 16px rgba(22,163,74,.3);
+              transition:var(--t)">
+      <i class="fas fa-arrow-left"></i> Ortga qaytish
+    </a>
+    <div style="margin-top:14px">
+      <a href="/" style="font-size:.83rem;color:var(--ink-4);text-decoration:none">
+        yoki <span style="color:var(--primary);text-decoration:underline">bosh sahifaga o'tish</span>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

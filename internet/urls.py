@@ -14,4 +14,5 @@ urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path('get-cities/', views.get_cities, name='get_cities'),
     path('order/success/', views.order_success, name='order_success'),
+    path('api/csrf/', views.refresh_csrf, name='refresh_csrf'),
 ]

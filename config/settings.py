@@ -36,6 +36,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_AGE = 31449600         # 1 yil (sekundlarda)
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_FAILURE_VIEW = 'internet.views.csrf_failure'
 
 # Session sozlamalari
 SESSION_COOKIE_SECURE = False      # Nginx allaqachon HTTPS ta'minlaydi
@@ -103,8 +104,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 30,
+        }
     }
 }
+
+# Session faylda saqlanadi — SQLite lock muammosini hal qiladi
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+SESSION_FILE_PATH = BASE_DIR / 'sessions'
 
 LANGUAGE_CODE = 'uz-uz'
 TIME_ZONE = 'Asia/Tashkent'

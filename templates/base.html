@@ -472,13 +472,35 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-const _csrf = (() => {
+function getCsrf() {
   const m = document.cookie.match(/csrftoken=([^;]+)/);
-  return m ? m[1] : document.querySelector('meta[name=csrf-token]')?.content || '';
-})();
+  return m ? decodeURIComponent(m[1]) : document.querySelector('meta[name=csrf-token]')?.content || '';
+}
+let _csrf = getCsrf();
+
+function refreshCsrfToken() {
+  fetch('/api/csrf/', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(d => {
+      if (!d.token) return;
+      _csrf = d.token;
+      document.querySelectorAll('input[name="csrfmiddlewaretoken"]').forEach(el => { el.value = _csrf; });
+      const m = document.querySelector('meta[name=csrf-token]');
+      if (m) m.content = _csrf;
+    })
+    .catch(() => {});
+}
+
+/* Sahifa fokusga qaytganda token yangilanadi */
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) refreshCsrfToken();
+});
+/* Har 5 daqiqada avtomatik yangilash */
+setInterval(refreshCsrfToken, 5 * 60 * 1000);
+
 $.ajaxSetup({ beforeSend(xhr, s) {
   if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(s.type) && !this.crossDomain)
-    xhr.setRequestHeader('X-CSRFToken', _csrf);
+    xhr.setRequestHeader('X-CSRFToken', getCsrf());
 }});
 $('form').each(function(){
   if (!$(this).find('[name=csrfmiddlewaretoken]').length)

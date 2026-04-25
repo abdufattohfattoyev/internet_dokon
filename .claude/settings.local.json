@@ -13,7 +13,8 @@
       "Read(//d/dorixona_web/**)",
       "Read(//d/internet_dorixona/**)",
       "Read(//d/apteka_uz/**)",
-      "PowerShell(Start-Process \"D:\\\\dorixona_web\\\\preview.html\")"
+      "PowerShell(Start-Process \"D:\\\\dorixona_web\\\\preview.html\")",
+      "Bash(python manage.py runserver 8001)"
     ]
   }
 }

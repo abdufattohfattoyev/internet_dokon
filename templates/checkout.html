@@ -582,6 +582,8 @@ $(function () {
      6. FORM VALIDATION
   ══════════════════════════════════════ */
   $('#order-form').on('submit', function (e) {
+    e.preventDefault();
+    const form     = this;
     const firstName = $('#id_first_name').val().trim();
     const phone     = $('#id_phone').val().trim();
     const mode      = $('#deliveryMethod').val();
@@ -611,12 +613,23 @@ $(function () {
     }
 
     if (!ok) {
-      e.preventDefault();
       if (!firstName || !phone)
         showToast("Ism va telefon raqamni kiriting", 'danger');
       else if (mode === 'manual')
         showToast("Barcha manzil maydonlarini to'ldiring", 'danger');
+      return;
     }
+
+    /* Submit oldidan CSRF tokenni yangilab, keyin yuborish */
+    fetch('/api/csrf/', { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.token) {
+          $('[name=csrfmiddlewaretoken]', form).val(d.token);
+        }
+        form.submit();
+      })
+      .catch(() => { form.submit(); });
   });
 
   $('#id_phone').on('blur', function () {

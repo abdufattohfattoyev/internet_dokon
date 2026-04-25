@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import get_token
 from django.utils import timezone
 from .utils import send_telegram_message
 from .forms import OrderForm
@@ -346,6 +348,15 @@ def checkout(request):
 
 def order_success(request):
     return render(request, 'order_success.html')
+
+
+def csrf_failure(request, reason=''):
+    return render(request, 'csrf_error.html', status=403)
+
+
+@ensure_csrf_cookie
+def refresh_csrf(request):
+    return JsonResponse({'token': get_token(request)})
 
 
 def get_cities(request):

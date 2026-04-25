@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Loyiha fayllarini ko'chirish
 COPY --chown=appuser:appuser . .
 
-# Static files papkasini tayyorlash
-RUN mkdir -p /app/staticfiles && chown -R appuser:appuser /app/staticfiles
+# Static va session papkalarini tayyorlash
+RUN mkdir -p /app/staticfiles /app/sessions && chown -R appuser:appuser /app/staticfiles /app/sessions
 
 # Static fayllarni yig'ish
 RUN python manage.py collectstatic --noinput --clear
@@ -25,4 +25,4 @@ RUN python manage.py collectstatic --noinput --clear
 USER appuser
 
 # Serverni ishga tushirish
-CMD ["gunicorn", "--bind", "0.0.0.0:8005", "--workers", "3", "--timeout", "120", "config.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8005", "--workers", "2", "--timeout", "120", "--keep-alive", "5", "config.wsgi:application"]
