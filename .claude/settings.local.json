@@ -14,7 +14,8 @@
       "Read(//d/internet_dorixona/**)",
       "Read(//d/apteka_uz/**)",
       "PowerShell(Start-Process \"D:\\\\dorixona_web\\\\preview.html\")",
-      "Bash(python manage.py runserver 8001)"
+      "Bash(python manage.py runserver 8001)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('internet/views.py'\\).read\\(\\)\\); print\\('OK'\\)\")"
     ]
   }
 }
