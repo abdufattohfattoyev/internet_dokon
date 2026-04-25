@@ -7,7 +7,13 @@
       "Bash(python manage.py check --deploy)",
       "Bash(python manage.py check)",
       "Bash(python manage.py makemigrations)",
-      "Bash(python manage.py migrate)"
+      "Bash(python manage.py migrate)",
+      "Read(//d//**)",
+      "Bash(dir D:/)",
+      "Read(//d/dorixona_web/**)",
+      "Read(//d/internet_dorixona/**)",
+      "Read(//d/apteka_uz/**)",
+      "PowerShell(Start-Process \"D:\\\\dorixona_web\\\\preview.html\")"
     ]
   }
 }

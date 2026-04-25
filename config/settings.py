@@ -12,9 +12,12 @@ ALLOWED_HOSTS = [
     '147.93.130.94',
     'localhost',
     '127.0.0.1',
-    'app',  # Nginx proxy_pass da ishlatiladigan xizmat nomi
+    'app',
 ]
 
+# Nginx proxy orqasida ishlash uchun — CSRF asosiy muammosini hal qiladi
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 # CSRF sozlamalari
 CSRF_TRUSTED_ORIGINS = [
@@ -27,16 +30,18 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # CSRF cookie sozlamalari
-CSRF_COOKIE_SECURE = not DEBUG  # Production da True bo'ladi
-CSRF_COOKIE_HTTPONLY = False  # JavaScript orqali kirishga ruxsat berish uchun
+CSRF_COOKIE_SECURE = False        # Nginx allaqachon HTTPS ta'minlaydi
+CSRF_COOKIE_HTTPONLY = False       # JavaScript orqali kirishga ruxsat
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_AGE = 31449600         # 1 yil (sekundlarda)
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken'
 
 # Session sozlamalari
-SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = False      # Nginx allaqachon HTTPS ta'minlaydi
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 1209600       # 2 hafta (sekundlarda)
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
