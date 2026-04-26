@@ -15,7 +15,10 @@
       "Read(//d/apteka_uz/**)",
       "PowerShell(Start-Process \"D:\\\\dorixona_web\\\\preview.html\")",
       "Bash(python manage.py runserver 8001)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('internet/views.py'\\).read\\(\\)\\); print\\('OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('internet/views.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/)",
+      "Bash(python manage.py runserver 8010)"
     ]
   }
 }

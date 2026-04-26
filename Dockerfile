@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Loyiha fayllarini ko'chirish
 COPY --chown=appuser:appuser . .
 
-# Static va session papkalarini tayyorlash
-RUN mkdir -p /app/staticfiles /app/sessions && chown -R appuser:appuser /app/staticfiles /app/sessions
+# Static files papkasini tayyorlash
+RUN mkdir -p /app/staticfiles && chown -R appuser:appuser /app/staticfiles
 
 # Static fayllarni yig'ish
 RUN python manage.py collectstatic --noinput --clear

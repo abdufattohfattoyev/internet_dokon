@@ -8,7 +8,6 @@ services:
       - .:/app
       - ./media:/app/media
       - static-data:/app/staticfiles
-      - ./sessions:/app/sessions
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}

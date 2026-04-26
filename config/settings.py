@@ -110,9 +110,7 @@ DATABASES = {
     }
 }
 
-# Session faylda saqlanadi — SQLite lock muammosini hal qiladi
-SESSION_ENGINE = 'django.contrib.sessions.backends.file'
-SESSION_FILE_PATH = BASE_DIR / 'sessions'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 LANGUAGE_CODE = 'uz-uz'
 TIME_ZONE = 'Asia/Tashkent'
