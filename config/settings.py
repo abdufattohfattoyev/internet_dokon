@@ -12,7 +12,6 @@ ALLOWED_HOSTS = [
     '147.93.130.94',
     'localhost',
     '127.0.0.1',
-    'app',
 ]
 
 # Nginx proxy orqasida ishlash uchun — CSRF asosiy muammosini hal qiladi

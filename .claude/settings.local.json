@@ -18,7 +18,21 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\('internet/views.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
       "Bash(python -c ' *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/)",
-      "Bash(python manage.py runserver 8010)"
+      "Bash(python manage.py runserver 8010)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8010/)",
+      "PowerShell(Start-Process \"http://127.0.0.1:8010/\")",
+      "Bash(python -c \"import apteka.views; print\\('views OK'\\)\")",
+      "Bash(curl -s http://127.0.0.1:8010/)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "PowerShell(Stop-Process *)",
+      "Bash(D:/internet_dokon/venv/Scripts/python.exe manage.py migrate)",
+      "Bash(D:/internet_dokon/venv/Scripts/python.exe manage.py check)",
+      "Bash(curl *)",
+      "PowerShell(netstat *)",
+      "Bash(D:/internet_dokon/venv/Scripts/python.exe -c \"import django; import os; os.environ.setdefault\\('DJANGO_SETTINGS_MODULE', 'config.settings'\\); django.setup\\(\\); from internet.views import checkout, get_cities; print\\('OK'\\)\")",
+      "Bash(D:/internet_dokon/venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('internet/views.py', encoding='utf-8'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(D:/internet_dokon/venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('internet/forms.py', encoding='utf-8'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")"
     ]
   }
 }
